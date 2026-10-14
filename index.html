@@ -48,21 +48,44 @@
   const status = document.getElementById("market-status");
 
   // This is a public market-data feed, not your OAuth Client ID.
-  // Replace 12345 with your numeric Deriv App ID.
-  const APP_ID = "12345";
-  const socket = new WebSocket(
-    "wss://ws.derivws.com/websockets/v3?app_id=" + APP_ID
+  // 
+   
+const socket = new WebSocket(
+  "wss://ws.binaryws.com/websockets/v3"
+);
+
+);
   );
 
-  socket.onopen = function () {
-    status.textContent = "Connected. Waiting for market price...";
-    socket.send(JSON.stringify({
-      ticks: "R_100",
-      subscribe: 1
+  
+socket.onopen = function () {
+  status.textContent = "Connected. Loading live prices...";
+  socket.send(JSON.stringify({
+    ticks: "1HZ100V",
+    subscribe: 1,
+    req_id: 1
+  }));
+};
+
+  }));
+};
     }));
   };
 
-  socket.onmessage = function (event) {
+  
+socket.onmessage = function (event) {
+  const data = JSON.parse(event.data);
+
+  if (data.tick) {
+    price.textContent = data.tick.quote;
+    status.textContent = "Live market prices updating";
+  }
+
+  if (data.error) {
+    status.textContent = "Market error: " + data.error.message;
+  }
+};
+ {
     const data = JSON.parse(event.data);
 
     if (data.tick) {
