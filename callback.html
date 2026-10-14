@@ -25,16 +25,16 @@
 <body>
   <main>
     <h1>TradeNova</h1>
-    <p id="status">Checking Deriv response...</p>
+    <p id="status">Checking authorization...</p>
     <p id="detail"></p>
     <p><a href="/" style="color:#55dfb5">Return to TradeNova</a></p>
   </main>
 
   <script>
+  (async () => {
     const status = document.getElementById("status");
     const detail = document.getElementById("detail");
     const params = new URLSearchParams(location.search);
-
     const code = params.get("code");
     const state = params.get("state");
     const error = params.get("error");
@@ -42,23 +42,54 @@
     if (error) {
       status.textContent = "Deriv authorization failed.";
       detail.textContent = error;
-    } else if (!code || !state) {
-      status.textContent = "No authorization response received.";
-      detail.textContent =
-        "Start again from TradeNova and complete Deriv authorization.";
-    } else {
-      const savedState = sessionStorage.getItem("oauth_state");
-
-      if (!savedState || state !== savedState) {
-        status.textContent = "Security check failed.";
-        detail.textContent =
-          "Return to TradeNova and start a new connection.";
-      } else {
-        status.textContent = "Authorization received.";
-        detail.textContent =
-          "The sign-in response arrived, but account connection is not finished. Token exchange still needs to be configured.";
-      }
+      return;
     }
+
+    if (!code || !state) {
+      status.textContent = "Authorization response missing.";
+      detail.textContent = "Return to TradeNova and connect again.";
+      return;
+    }
+
+    const savedState = sessionStorage.getItem("oauth_state");
+    const verifier = sessionStorage.getItem("pkce_code_verifier");
+
+    if (!savedState || state !== savedState || !verifier) {
+      status.textContent = "Security check failed.";
+      detail.textContent = "Return to TradeNova and start again.";
+      return;
+    }
+
+    status.textContent = "Completing secure connection...";
+
+    try {
+      const response = await fetch("/api/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: code,
+          code_verifier: verifier,
+          redirect_uri: "https://tradenova-phi.vercel.app/callback"
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Token exchange failed");
+      }
+
+      sessionStorage.removeItem("oauth_state");
+      sessionStorage.removeItem("pkce_code_verifier");
+
+      status.textContent = "Deriv connection successful!";
+      detail.textContent =
+        "Authorization completed. Return to TradeNova to continue.";
+    } catch (err) {
+      status.textContent = "Connection could not be completed.";
+      detail.textContent = err.message;
+    }
+  })();
   </script>
 </body>
 </html>
