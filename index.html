@@ -37,6 +37,7 @@
       padding: 18px;
       margin-top: 22px;
       border-radius: 12px;
+      overflow-wrap: anywhere;
     }
   </style>
 </head>
@@ -46,7 +47,7 @@
     <p>Connect your Deriv account to continue.</p>
 
     <button id="connect">Connect to Deriv</button>
-    <p id="auth-status">Not connected.</p>
+    <p id="auth-status">Checking connection...</p>
 
     <section class="panel">
       <h2>Live Market</h2>
@@ -63,14 +64,18 @@
 
     const button = document.getElementById("connect");
     const authStatus = document.getElementById("auth-status");
+    const price = document.getElementById("market-price");
+    const marketStatus = document.getElementById("market-status");
 
     function showAuthStatus() {
-      const token = sessionStorage.getItem("tradenova_access_token");
+      const token = sessionStorage.getItem(
+        "tradenova_access_token"
+      );
 
       if (token) {
         button.textContent = "Deriv Connected";
         authStatus.textContent =
-          "Authorization token received in this browser session.";
+          "Authorization token received in this browser session. Token validity has not yet been verified.";
       } else {
         button.disabled = false;
         button.textContent = "Connect to Deriv";
@@ -80,10 +85,13 @@
 
     button.addEventListener("click", async () => {
       button.disabled = true;
-      authStatus.textContent = "Starting Deriv authorization...";
+      authStatus.textContent =
+        "Starting Deriv authorization...";
 
       try {
-        const bytes = crypto.getRandomValues(new Uint8Array(32));
+        const bytes =
+          crypto.getRandomValues(new Uint8Array(32));
+
         const verifier = Array.from(bytes)
           .map(b => b.toString(16).padStart(2, "0"))
           .join("");
@@ -94,16 +102,24 @@
         );
 
         const challenge = btoa(
-          String.fromCharCode(...new Uint8Array(digest))
-        ).replace(/\+/g, "-").replace(/\//g, "_")
-         .replace(/=+$/, "");
+          String.fromCharCode(
+            ...new Uint8Array(digest)
+          )
+        )
+          .replace(/\+/g, "-")
+          .replace(/\//g, "_")
+          .replace(/=+$/, "");
 
-        const stateBytes = crypto.getRandomValues(new Uint8Array(16));
+        const stateBytes =
+          crypto.getRandomValues(new Uint8Array(16));
+
         const state = Array.from(stateBytes)
           .map(b => b.toString(16).padStart(2, "0"))
           .join("");
 
-        sessionStorage.setItem("pkce_code_verifier", verifier);
+        sessionStorage.setItem(
+          "pkce_code_verifier", verifier
+        );
         sessionStorage.setItem("oauth_state", state);
 
         const params = new URLSearchParams({
@@ -129,17 +145,17 @@
 
     showAuthStatus();
 
-    // Public market-data connection; no OAuth token needed.
-    const price = document.getElementById("market-price");
-    const marketStatus = document.getElementById("market-status");
+    // Public market data does not require an OAuth token.
+    let socket;
 
     try {
-      const socket = new WebSocket(
+      socket = new WebSocket(
         "wss://ws.binaryws.com/websockets/v3"
       );
 
       socket.onopen = function () {
-        marketStatus.textContent = "Connected. Requesting live ticks...";
+        marketStatus.textContent =
+          "Connected. Requesting live ticks...";
 
         socket.send(JSON.stringify({
           ticks: "1HZ100V",
@@ -149,32 +165,44 @@
       };
 
       socket.onmessage = function (event) {
-        const data = JSON.parse(event.data);
+        try {
+          const data = JSON.parse(event.data);
 
-        if (data.tick) {
-          price.textContent = data.tick.quote;
-          marketStatus.textContent = "Live prices updating.";
-        }
+          if (data.error) {
+            marketStatus.textContent =
+              "Market error: " + data.error.message;
+            return;
+          }
 
-        if (data.error) {
+          if (data.tick) {
+            price.textContent = data.tick.quote;
+            marketStatus.textContent =
+              "Live prices updating.";
+          }
+        } catch (error) {
           marketStatus.textContent =
-            "Market error: " + data.error.message;
+            "Could not read the market response.";
         }
       };
 
       socket.onerror = function () {
         marketStatus.textContent =
-          "Market connection failed. Check the endpoint and network.";
+          "Market connection failed. Waiting for close details...";
       };
 
-      socket.onclose = function () {
-        if (marketStatus.textContent !== "Live prices updating.") {
-          marketStatus.textContent = "Market connection closed.";
-        }
+      // Show the actual WebSocket close code and reason.
+      socket.onclose = function (event) {
+        marketStatus.textContent =
+          "Connection closed. Code: " + event.code +
+          ". Reason: " +
+          (event.reason || "Not provided") +
+          ". Refresh the page to retry.";
       };
 
     } catch (error) {
-      marketStatus.textContent = "Could not start market connection.";
+      marketStatus.textContent =
+        "Could not start market connection: " +
+        (error.message || "Unknown error");
     }
   </script>
 </body>
