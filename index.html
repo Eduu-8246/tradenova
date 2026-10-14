@@ -57,6 +57,9 @@
     }
 
     showStatus();
+if (sessionStorage.getItem("tradenova_connected") === "true") {
+  button.disabled = true;
+}
 
     button.addEventListener("click", async () => {
       if (sessionStorage.getItem("tradenova_connected") === "true") {
