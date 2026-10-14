@@ -51,7 +51,7 @@
       return;
     }
 
-    const savedState = sessionStorage.getItem("oauth_state");
+    const savedState = sessionStorage.getItem("tradenova_connected", "true");
     const verifier = sessionStorage.getItem("pkce_code_verifier");
 
     if (!savedState || state !== savedState || !verifier) {
