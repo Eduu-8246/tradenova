@@ -1,1 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TradeNova - Deriv Login</title>
+</head>
+<body style="background:#0b1220;color:white;font-family:Arial;text-align:center;padding:40px 15px">
+  <h2>TradeNova</h2>
+  <p id="status">Checking Deriv login response...</p>
 
+  <script>
+    const status = document.getElementById("status");
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.has("error")) {
+      status.textContent = "Deriv login was not completed. Please try again.";
+    } else if (params.has("code") && params.has("state")) {
+      status.textContent =
+        "Authorization response received. Secure verification is still required.";
+    } else {
+      status.textContent =
+        "No authorization response found. Return to TradeNova and try connecting.";
+    }
+  </script>
+</body>
+</html>
