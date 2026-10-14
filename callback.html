@@ -20,6 +20,7 @@
       border-radius: 16px;
     }
     h1 { color: #55dfb5; }
+    a { color: #55dfb5; }
   </style>
 </head>
 <body>
@@ -27,7 +28,7 @@
     <h1>TradeNova</h1>
     <p id="status">Checking authorization...</p>
     <p id="detail"></p>
-    <p><a href="/" style="color:#55dfb5">Return to TradeNova</a></p>
+    <p><a href="/">Return to TradeNova</a></p>
   </main>
 
   <script>
@@ -51,12 +52,13 @@
       return;
     }
 
-    const savedState = sessionStorage.getItem("tradenova_connected", "true");
+    const savedState = sessionStorage.getItem("oauth_state");
     const verifier = sessionStorage.getItem("pkce_code_verifier");
 
     if (!savedState || state !== savedState || !verifier) {
       status.textContent = "Security check failed.";
-      detail.textContent = "Return to TradeNova and start again.";
+      detail.textContent =
+        "The browser session lost the login security data. Start again in the same browser.";
       return;
     }
 
@@ -79,6 +81,7 @@
         throw new Error(data.error || "Token exchange failed");
       }
 
+      sessionStorage.setItem("tradenova_connected", "true");
       sessionStorage.removeItem("oauth_state");
       sessionStorage.removeItem("pkce_code_verifier");
 
