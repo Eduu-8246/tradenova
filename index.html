@@ -35,6 +35,55 @@
   <main>
     <h1>TradeNova</h1>
     <p>Connect your Deriv account to continue.</p>
+<div style="background:#192538;color:white;padding:20px;margin:20px 0;border-radius:12px;">
+  <h2 style="color:#55dfb5;">Live Market</h2>
+  <p>Volatility 100 Index</p>
+  <h1 id="market-price">Connecting...</h1>
+  <p id="market-status">Loading live prices...</p>
+</div>
+
+<script>
+(function () {
+  const price = document.getElementById("market-price");
+  const status = document.getElementById("market-status");
+
+  // This is a public market-data feed, not your OAuth Client ID.
+  // Replace 12345 with your numeric Deriv App ID.
+  const APP_ID = "12345";
+  const socket = new WebSocket(
+    "wss://ws.derivws.com/websockets/v3?app_id=" + APP_ID
+  );
+
+  socket.onopen = function () {
+    status.textContent = "Connected. Waiting for market price...";
+    socket.send(JSON.stringify({
+      ticks: "R_100",
+      subscribe: 1
+    }));
+  };
+
+  socket.onmessage = function (event) {
+    const data = JSON.parse(event.data);
+
+    if (data.tick) {
+      price.textContent = data.tick.quote;
+      status.textContent = "Live price updates received";
+    }
+
+    if (data.error) {
+      status.textContent = "Market error: " + data.error.message;
+    }
+  };
+
+  socket.onerror = function () {
+    status.textContent = "Market connection failed.";
+  };
+
+  socket.onclose = function () {
+    status.textContent = "Market connection closed.";
+  };
+})();
+</script>
     <button id="connect">Connect to Deriv</button>
     <p id="status">Ready to connect.</p>
   </main>
