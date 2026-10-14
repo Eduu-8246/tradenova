@@ -1,1 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TradeNova | Trading Dashboard</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b1220;
+      color: #f3f6ff;
+    }
+    header {
+      padding: 22px 6%;
+      background: #111c30;
+      border-bottom: 1px solid #26344b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .brand { font-size: 24px; font-weight: bold; color: #65e6bd; }
+    .status { color: #c5cedd; font-size: 13px; }
+    main { max-width: 1100px; margin: auto; padding: 28px 18px; }
+    h1 { font-size: 28px; margin-bottom: 8px; }
+    .muted { color: #a7b4c9; line-height: 1.5; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin: 24px 0;
+    }
+    .card {
+      background: #131f33;
+      border: 1px solid #2b3b54;
+      border-radius: 14px;
+      padding: 20px;
+    }
+    .label { color: #a7b4c9; font-size: 14px; }
+    .value { font-size: 25px; font-weight: bold; margin-top: 12px; }
+    button, select {
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid #40516b;
+      font-size: 15px;
+    }
+    button { cursor: pointer; background: #65e6bd; color: #07150f; font-weight: bold; }
+    button.secondary { background: #202e44; color: #fff; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    select { background: #0b1220; color: white; width: 100%; margin: 10px 0 16px; }
+    .notice {
+      padding: 14px;
+      background: #202b40;
+      border-left: 4px solid #65e6bd;
+      border-radius: 6px;
+      color: #dce6f5;
+      line-height: 1.5;
+    }
+    footer { text-align: center; padding: 24px; color: #8e9db4; font-size: 13px; }
+    a { color: #65e6bd; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">TradeNova</div>
+    <div class="status" id="connection">Deriv account: Not connected</div>
+  </header>
 
+  <main>
+    <h1>Your trading dashboard</h1>
+    <p class="muted">A starting point for your Deriv account connection and trading tools.</p>
+
+    <div class="notice">
+      <strong>Demo first:</strong> This dashboard does not place trades yet.
+      Connect and verify your Deriv application before enabling any trading actions.
+    </div>
+
+    <section class="grid">
+      <div class="card">
+        <div class="label">Account status</div>
+        <div class="value" id="account">Not connected</div>
+      </div>
+      <div class="card">
+        <div class="label">Account balance</div>
+        <div class="value" id="balance">—</div>
+      </div>
+      <div class="card">
+        <div class="label">Trading mode</div>
+        <div class="value">Demo first</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Connect to Deriv</h2>
+      <p class="muted">Use the official Deriv authorization flow. A registered OAuth client ID and callback URL are required.</p>
+
+      <label for="clientId">Deriv OAuth client ID</label>
+      <select id="clientId">
+        <option value="">OAuth client ID not configured</option>
+      </select>
+
+      <button class="secondary" id="connect" disabled>Connect Deriv (not configured)</button>
+      <p class="muted" id="message">Next: verify your OAuth application and callback URL.</p>
+      <p><a href="https://developers.deriv.com/" target="_blank" rel="noopener">Open Deriv Developers</a></p>
+    </section>
+  </main>
+
+  <footer>TradeNova · Trading involves risk. Always verify account details before trading.</footer>
+
+  <script>
+    // OAuth is intentionally disabled until the real Deriv client ID
+    // and registered
