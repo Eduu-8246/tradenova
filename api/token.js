@@ -1,65 +1,56 @@
 export default async function handler(req, res) {
-if (req.method !== "POST") {
-return res.status(405).json({ error: "Method not allowed" });
-}
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
 
-const clientId = process.env.DERIV_CLIENT_ID;
-const clientSecret = process.env.DERIV_CLIENT_SECRET;
+  const clientId = process.env.DERIV_CLIENT_ID;
 
-if (!clientId || !clientSecret) {
-return res.status(500).json({
-error: "OAuth server configuration is incomplete"
-});
-}
+  if (!clientId) {
+    return res.status(500).json({
+      error: "DERIV_CLIENT_ID is missing in Vercel"
+    });
+  }
 
-const { code, redirect_uri } = req.body || {};
+  const { code, code_verifier, redirect_uri } = req.body || {};
+  const expectedRedirect =
+    "https://tradenova-phi.vercel.app/callback";
 
-if (!code || !redirect_uri) {
-return res.status(400).json({
-error: "Missing authorization code or redirect URI"
-});
-}
+  if (!code || !code_verifier || redirect_uri !== expectedRedirect) {
+    return res.status(400).json({
+      error: "Missing code, verifier, or valid redirect URI"
+    });
+  }
 
-const expectedRedirect =
-"https://tradenova.vercel.app/callback";
+  try {
+    const response = await fetch(
+      "https://auth.deriv.com/oauth2/token",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({
+          grant_type: "authorization_code",
+          client_id: clientId,
+          code,
+          code_verifier,
+          redirect_uri: expectedRedirect
+        })
+      }
+    );
 
-if (redirect_uri !== expectedRedirect) {
-return res.status(400).json({
-error: "Invalid redirect URI"
-});
-}
+    const data = await response.json();
 
-try {
-const response = await fetch(
-"https://api.deriv.com/oauth2/token",
-{
-method: "POST",
-headers: {
-"Content-Type": "application/json"
-},
-body: JSON.stringify({
-grant_type: "authorization_code",
-code,
-redirect_uri,
-client_id: clientId,
-client_secret: clientSecret
-})
-}
-);
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: data.error_description || data.error || "Token exchange failed"
+      });
+    }
 
-const data = await response.json();
-
-if (!response.ok) {
-  return res.status(response.status).json({
-    error: "OAuth exchange failed"
-  });
-}
-
-return res.status(200).json(data);
-
-} catch {
-return res.status(500).json({
-error: "Unable to complete OAuth exchange"
-});
-}
+    return res.status(200).json(data);
+  } catch {
+    return res.status(500).json({
+      error: "Unable to complete OAuth exchange"
+    });
+  }
 }
