@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,16 +11,16 @@
       color: white;
       font-family: Arial, sans-serif;
       text-align: center;
-      padding: 50px 15px;
+      padding: 30px 15px;
     }
     main {
-      max-width: 420px;
+      max-width: 480px;
       margin: auto;
-      padding: 25px;
+      padding: 24px;
       background: #192538;
       border-radius: 16px;
     }
-    h1 { color: #55dfb5; }
+    h1, h2 { color: #55dfb5; }
     button {
       padding: 15px;
       width: 100%;
@@ -28,6 +29,14 @@
       background: #55dfb5;
       font-weight: bold;
       font-size: 16px;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .6; }
+    .panel {
+      background: #101827;
+      padding: 18px;
+      margin-top: 22px;
+      border-radius: 12px;
     }
   </style>
 </head>
@@ -35,80 +44,16 @@
   <main>
     <h1>TradeNova</h1>
     <p>Connect your Deriv account to continue.</p>
-<div style="background:#192538;color:white;padding:20px;margin:20px 0;border-radius:12px;">
-  <h2 style="color:#55dfb5;">Live Market</h2>
-  <p>Volatility 100 Index</p>
-  <h1 id="market-price">Connecting...</h1>
-  <p id="market-status">Loading live prices...</p>
-</div>
 
-<script>
-(function () {
-  const price = document.getElementById("market-price");
-  const status = document.getElementById("market-status");
-
-  // This is a public market-data feed, not your OAuth Client ID.
-  // 
-   
-const socket = new WebSocket(
-  "wss://ws.binaryws.com/websockets/v3"
-);
-
-);
-  );
-
-  
-socket.onopen = function () {
-  status.textContent = "Connected. Loading live prices...";
-  socket.send(JSON.stringify({
-    ticks: "1HZ100V",
-    subscribe: 1,
-    req_id: 1
-  }));
-};
-
-  }));
-};
-    }));
-  };
-
-  
-socket.onmessage = function (event) {
-  const data = JSON.parse(event.data);
-
-  if (data.tick) {
-    price.textContent = data.tick.quote;
-    status.textContent = "Live market prices updating";
-  }
-
-  if (data.error) {
-    status.textContent = "Market error: " + data.error.message;
-  }
-};
- {
-    const data = JSON.parse(event.data);
-
-    if (data.tick) {
-      price.textContent = data.tick.quote;
-      status.textContent = "Live price updates received";
-    }
-
-    if (data.error) {
-      status.textContent = "Market error: " + data.error.message;
-    }
-  };
-
-  socket.onerror = function () {
-    status.textContent = "Market connection failed.";
-  };
-
-  socket.onclose = function () {
-    status.textContent = "Market connection closed.";
-  };
-})();
-</script>
     <button id="connect">Connect to Deriv</button>
-    <p id="status">Ready to connect.</p>
+    <p id="auth-status">Not connected.</p>
+
+    <section class="panel">
+      <h2>Live Market</h2>
+      <p>Volatility 100 (1-second) Index</p>
+      <h1 id="market-price">Waiting for price...</h1>
+      <p id="market-status">Starting market connection...</p>
+    </section>
   </main>
 
   <script>
@@ -117,39 +62,31 @@ socket.onmessage = function (event) {
       "https://tradenova-phi.vercel.app/callback";
 
     const button = document.getElementById("connect");
-    const status = document.getElementById("status");
+    const authStatus = document.getElementById("auth-status");
 
-    function showStatus() {
-      if (sessionStorage.getItem("tradenova_connected") === "true") {
-        button.textContent = "Deriv Authorization Received";
-        button.disabled = true;
-        status.textContent =
-          "Authorization completed for this browser session.";
+    function showAuthStatus() {
+      const token = sessionStorage.getItem("tradenova_access_token");
+
+      if (token) {
+        button.textContent = "Deriv Connected";
+        authStatus.textContent =
+          "Authorization token received in this browser session.";
+      } else {
+        button.disabled = false;
+        button.textContent = "Connect to Deriv";
+        authStatus.textContent = "Not connected.";
       }
     }
 
-    showStatus();
-if (sessionStorage.getItem("tradenova_connected") === "true") {
-  button.disabled = true;
-}
-
     button.addEventListener("click", async () => {
-      if (sessionStorage.getItem("tradenova_connected") === "true") {
-        showStatus();
-        return;
-      }
-
       button.disabled = true;
-      status.textContent = "Connecting to Deriv...";
+      authStatus.textContent = "Starting Deriv authorization...";
 
       try {
-        const bytes = new Uint8Array(32);
-        crypto.getRandomValues(bytes);
-
-        const verifier = btoa(
-          String.fromCharCode(...bytes)
-        ).replace(/\+/g, "-").replace(/\//g, "_")
-         .replace(/=+$/, "");
+        const bytes = crypto.getRandomValues(new Uint8Array(32));
+        const verifier = Array.from(bytes)
+          .map(b => b.toString(16).padStart(2, "0"))
+          .join("");
 
         const digest = await crypto.subtle.digest(
           "SHA-256",
@@ -161,8 +98,7 @@ if (sessionStorage.getItem("tradenova_connected") === "true") {
         ).replace(/\+/g, "-").replace(/\//g, "_")
          .replace(/=+$/, "");
 
-        const stateBytes = new Uint8Array(16);
-        crypto.getRandomValues(stateBytes);
+        const stateBytes = crypto.getRandomValues(new Uint8Array(16));
         const state = Array.from(stateBytes)
           .map(b => b.toString(16).padStart(2, "0"))
           .join("");
@@ -175,18 +111,71 @@ if (sessionStorage.getItem("tradenova_connected") === "true") {
           client_id: CLIENT_ID,
           redirect_uri: REDIRECT_URI,
           scope: "trade",
-          state,
+          state: state,
           code_challenge: challenge,
           code_challenge_method: "S256"
         });
 
-        location.href =
-          "https://auth.deriv.com/oauth2/auth?" + params;
+        window.location.href =
+          "https://auth.deriv.com/oauth2/auth?" +
+          params.toString();
+
       } catch (error) {
-        status.textContent = "Could not start login. Please try again.";
+        authStatus.textContent =
+          "Could not start authorization. Try again.";
         button.disabled = false;
       }
     });
+
+    showAuthStatus();
+
+    // Public market-data connection; no OAuth token needed.
+    const price = document.getElementById("market-price");
+    const marketStatus = document.getElementById("market-status");
+
+    try {
+      const socket = new WebSocket(
+        "wss://ws.binaryws.com/websockets/v3"
+      );
+
+      socket.onopen = function () {
+        marketStatus.textContent = "Connected. Requesting live ticks...";
+
+        socket.send(JSON.stringify({
+          ticks: "1HZ100V",
+          subscribe: 1,
+          req_id: 1
+        }));
+      };
+
+      socket.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+
+        if (data.tick) {
+          price.textContent = data.tick.quote;
+          marketStatus.textContent = "Live prices updating.";
+        }
+
+        if (data.error) {
+          marketStatus.textContent =
+            "Market error: " + data.error.message;
+        }
+      };
+
+      socket.onerror = function () {
+        marketStatus.textContent =
+          "Market connection failed. Check the endpoint and network.";
+      };
+
+      socket.onclose = function () {
+        if (marketStatus.textContent !== "Live prices updating.") {
+          marketStatus.textContent = "Market connection closed.";
+        }
+      };
+
+    } catch (error) {
+      marketStatus.textContent = "Could not start market connection.";
+    }
   </script>
 </body>
 </html>
