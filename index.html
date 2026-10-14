@@ -2,90 +2,92 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TradeNova | Deriv Trading</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TradeNova</title>
   <style>
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0b1220;
+      background: #101827;
       color: white;
-      display: flex;
-      min-height: 100vh;
-      align-items: center;
-      justify-content: center;
+      font-family: Arial, sans-serif;
       text-align: center;
+      padding: 50px 15px;
     }
-    .card {
-      width: 85%;
+    main {
       max-width: 420px;
-      padding: 30px 20px;
-      background: #162238;
-      border-radius: 18px;
+      margin: auto;
+      padding: 25px;
+      background: #192538;
+      border-radius: 16px;
     }
-    h1 { color: #36d6a5; }
-    p { color: #cbd5e1; line-height: 1.6; }
+    h1 { color: #55dfb5; }
     button {
-      width: 100%;
       padding: 15px;
+      width: 100%;
       border: 0;
-      border-radius: 9px;
-      background: #36d6a5;
-      color: #08111e;
-      font-size: 16px;
+      border-radius: 8px;
+      background: #55dfb5;
       font-weight: bold;
-      cursor: pointer;
+      font-size: 16px;
     }
-    button:disabled { opacity: .6; cursor: wait; }
-    #status { margin-top: 15px; font-size: 14px; }
   </style>
 </head>
 <body>
-  <main class="card">
+  <main>
     <h1>TradeNova</h1>
     <p>Connect your Deriv account to continue.</p>
     <button id="connect">Connect to Deriv</button>
-    <p id="status" role="status">Ready to connect.</p>
+    <p id="status">Ready to connect.</p>
   </main>
 
   <script>
     const CLIENT_ID = "34FHIu3inyzM68fO3UiBv";
-    const REDIRECT_URI = "https://tradenova-phi.vercel.app/callback";
+    const REDIRECT_URI =
+      "https://tradenova-phi.vercel.app/callback";
 
     const button = document.getElementById("connect");
     const status = document.getElementById("status");
 
+    function showStatus() {
+      if (sessionStorage.getItem("tradenova_connected") === "true") {
+        button.textContent = "Deriv Authorization Received";
+        button.disabled = true;
+        status.textContent =
+          "Authorization completed for this browser session.";
+      }
+    }
+
+    showStatus();
+
     button.addEventListener("click", async () => {
+      if (sessionStorage.getItem("tradenova_connected") === "true") {
+        showStatus();
+        return;
+      }
+
       button.disabled = true;
-      status.textContent = "Preparing secure connection...";
+      status.textContent = "Connecting to Deriv...";
 
       try {
-        if (!window.crypto || !window.crypto.subtle) {
-          throw new Error("Secure connection unavailable. Open the HTTPS website.");
-        }
+        const bytes = new Uint8Array(32);
+        crypto.getRandomValues(bytes);
 
-        const randomBytes = new Uint8Array(32);
-        window.crypto.getRandomValues(randomBytes);
+        const verifier = btoa(
+          String.fromCharCode(...bytes)
+        ).replace(/\+/g, "-").replace(/\//g, "_")
+         .replace(/=+$/, "");
 
-        const verifier = btoa(String.fromCharCode(...randomBytes))
-          .replace(/\+/g, "-")
-          .replace(/\//g, "_")
-          .replace(/=+$/, "");
-
-        const digest = await window.crypto.subtle.digest(
+        const digest = await crypto.subtle.digest(
           "SHA-256",
           new TextEncoder().encode(verifier)
         );
 
         const challenge = btoa(
           String.fromCharCode(...new Uint8Array(digest))
-        )
-          .replace(/\+/g, "-")
-          .replace(/\//g, "_")
-          .replace(/=+$/, "");
+        ).replace(/\+/g, "-").replace(/\//g, "_")
+         .replace(/=+$/, "");
 
         const stateBytes = new Uint8Array(16);
-        window.crypto.getRandomValues(stateBytes);
+        crypto.getRandomValues(stateBytes);
         const state = Array.from(stateBytes)
           .map(b => b.toString(16).padStart(2, "0"))
           .join("");
@@ -98,15 +100,15 @@
           client_id: CLIENT_ID,
           redirect_uri: REDIRECT_URI,
           scope: "trade",
-          state: state,
+          state,
           code_challenge: challenge,
           code_challenge_method: "S256"
         });
 
-        window.location.href =
-          "https://auth.deriv.com/oauth2/auth?" + params.toString();
+        location.href =
+          "https://auth.deriv.com/oauth2/auth?" + params;
       } catch (error) {
-        status.textContent = error.message || "Could not start connection.";
+        status.textContent = "Could not start login. Please try again.";
         button.disabled = false;
       }
     });
