@@ -30,6 +30,7 @@
       font-weight: bold;
       font-size: 16px;
     }
+    button:disabled { opacity: 0.6; }
     .panel {
       background: #101827;
       padding: 16px;
@@ -66,13 +67,12 @@
   const marketStatus = document.getElementById("market-status");
 
   function showAuthStatus() {
-    const token =
-      sessionStorage.getItem("tradenova_access_token");
+    const token = sessionStorage.getItem("tradenova_access_token");
 
     if (token) {
       button.textContent = "Deriv Authorization Received";
       authStatus.textContent =
-        "Token received in this browser session; validity not yet verified.";
+        "Token received in this session; validity not verified.";
     } else {
       button.textContent = "Connect to Deriv";
       authStatus.textContent = "Not connected.";
@@ -100,9 +100,7 @@
        .replace(/\//g, "_")
        .replace(/=+$/, "");
 
-      const stateBytes =
-        crypto.getRandomValues(new Uint8Array(16));
-
+      const stateBytes = crypto.getRandomValues(new Uint8Array(16));
       const state = Array.from(stateBytes)
         .map(b => b.toString(16).padStart(2, "0"))
         .join("");
@@ -121,8 +119,7 @@
       });
 
       window.location.href =
-        "https://auth.deriv.com/oauth2/auth?" +
-        params.toString();
+        "https://auth.deriv.com/oauth2/auth?" + params.toString();
     } catch (error) {
       authStatus.textContent =
         "Authorization could not start. Try again.";
@@ -132,10 +129,9 @@
 
   showAuthStatus();
 
-  // PUBLIC MARKET DATA TEST.
-  // App ID 1089 is used here only to test the price feed.
-  let socket;
-  let reconnectTimer;
+  // Public market-data connection. No account token is needed.
+  let socket = null;
+  let reconnectTimer = null;
   let reconnectDelay = 3000;
   let stopped = false;
 
@@ -145,13 +141,12 @@
 
     try {
       socket = new WebSocket(
-        "wss://ws.binaryws.com/websockets/v3?app_id=1089"
+        "wss://ws.derivws.com/websockets/v3?app_id=1089"
       );
 
       socket.onopen = function () {
         reconnectDelay = 3000;
-        marketStatus.textContent =
-          "Connected. Requesting live prices...";
+        marketStatus.textContent = "Connected. Requesting live prices...";
 
         socket.send(JSON.stringify({
           ticks: "1HZ100V",
@@ -165,56 +160,55 @@
 
         try {
           data = JSON.parse(event.data);
-        } catch (error) {
-          marketStatus.textContent =
-            "Received an unreadable market response.";
+        } catch {
+          marketStatus.textContent = "Received an unreadable response.";
           return;
         }
 
         if (data.error) {
           marketStatus.textContent =
-            "Deriv market error: " + data.error.message;
+            "Deriv error: " + data.error.message;
           return;
         }
 
         if (data.tick && data.tick.quote !== undefined) {
           price.textContent = data.tick.quote;
-          marketStatus.textContent =
-            "LIVE: Prices are updating.";
-        } else if (data.msg_type) {
-          marketStatus.textContent =
-            "Connected. Response: " + data.msg_type +
-            ". Waiting for tick data...";
+          marketStatus.textContent = "LIVE: Prices are updating.";
         }
       };
 
       socket.onerror = function () {
         marketStatus.textContent =
-          "Market socket error. Checking connection...";
+          "WebSocket error. Waiting to reconnect...";
       };
 
       socket.onclose = function (event) {
         if (stopped) return;
 
         marketStatus.textContent =
-          "Connection closed. Code " + event.code +
-          ". " + (event.reason || "No reason supplied") +
-          ". Retrying...";
+          "Connection closed (" + event.code + "). Retrying...";
 
         reconnectTimer = setTimeout(function () {
           reconnectDelay = Math.min(reconnectDelay * 2, 30000);
           connectMarket();
         }, reconnectDelay);
       };
-
     } catch (error) {
       marketStatus.textContent =
-        "Could not start market: " +
-        (error.message || "Unknown error");
+        "Could not start market connection: " + error.message;
 
       reconnectTimer = setTimeout(connectMarket, 5000);
     }
   }
+
+  window.addEventListener("online", function () {
+    reconnectDelay = 3000;
+    connectMarket();
+  });
+
+  window.addEventListener("offline", function () {
+    marketStatus.textContent = "Your device is offline.";
+  });
 
   connectMarket();
 </script>
