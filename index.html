@@ -21,15 +21,10 @@ button:disabled{opacity:.5}
 .status{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}
 .muted{font-size:13px;color:#bdc9d9}
 .price{font-size:28px}
-
 #welcome{
-  max-width:650px;
-  margin:12vh auto 0;
-  padding:28px 20px;
-  background:#192538;
-  border:1px solid #2e4358;
-  border-radius:16px;
-  text-align:center;
+  max-width:650px;margin:12vh auto 0;padding:28px 20px;
+  background:#192538;border:1px solid #2e4358;
+  border-radius:16px;text-align:center
 }
 #welcome h1{font-size:34px;color:#55dfb5}
 #welcome p{color:#bdc9d9;line-height:1.6}
@@ -54,7 +49,7 @@ button:disabled{opacity:.5}
 <section class="panel">
 <h2>1. Account Connection</h2>
 <button id="verify">Connect / Verify Deriv</button>
-<p id="auth" class="status">Checking saved connection...</p>
+<p id="auth" class="status">Not connected.</p>
 <label for="account">Choose account</label>
 <select id="account"><option value="">Loading accounts...</option></select>
 <button id="connect">Connect Selected Account</button>
@@ -76,7 +71,7 @@ button:disabled{opacity:.5}
 <option value="R_10">Volatility 10</option>
 </select>
 <div id="price" class="price">Waiting for price...</div>
-<p id="market-status" class="status">Connecting to market...</p>
+<p id="market-status" class="status">Market not connected.</p>
 </section>
 
 <section class="panel">
@@ -120,7 +115,7 @@ button:disabled{opacity:.5}
 <button id="sell" class="danger" disabled>Sell Open Contract</button>
 <p id="trade-status" class="status">No trade placed.</p>
 <p id="contract-info" class="status"></p>
-<p class="muted">Contract availability depends on the market, account, and Deriv API permissions. Always test in Demo first.</p>
+<p class="muted">Contract availability depends on the market, account and API permissions. Test with Demo first.</p>
 </section>
 
 <section class="panel">
@@ -132,7 +127,7 @@ button:disabled{opacity:.5}
 <script>
 "use strict";
 
-/* Keep the registered Deriv application details unchanged. */
+/* Registered Deriv application details — unchanged. */
 const CLIENT_ID = "34FHIu3inyzM68fO3UiBv";
 const REDIRECT_URI = "https://tradenova-phi.vercel.app/callback";
 const API = "https://api.derivws.com";
@@ -140,6 +135,7 @@ const AUTH_URL = "https://auth.deriv.com/oauth2/auth";
 const PUBLIC_WS = "wss://api.derivws.com/trading/v1/options/ws/public";
 
 const $ = id => document.getElementById(id);
+
 let token = null;
 let accounts = [];
 let socket = null;
@@ -218,7 +214,7 @@ function startLogin() {
     .catch(e => show("auth", "Login could not start: " + e.message));
 }
 
-/* Verify that the saved access token can retrieve account information. */
+/* Verify the saved Deriv token and reveal the dashboard only on success. */
 async function verify() {
   try {
     token = sessionStorage.getItem("tradenova_access_token");
@@ -677,9 +673,14 @@ function connectMarket() {
   };
 }
 
-/* Welcome screen authorization button. */
-$("welcome-connect").addEventListener("click", () => {
-  startLogin();
+/* Welcome screen: check a saved token only when the user taps the button. */
+$("welcome-connect").addEventListener("click", async () => {
+  if (sessionStorage.getItem("tradenova_access_token")) {
+    const connected = await verify();
+    if (connected) connectMarket();
+  } else {
+    startLogin();
+  }
 });
 
 $("verify").addEventListener("click", async () => {
@@ -709,16 +710,10 @@ $("account").addEventListener("change", () => {
   show("quote-status", "Reconnect and request a fresh quote.");
 });
 
-/* Start on the welcome screen and reveal the dashboard only after verification. */
+/* Always start on the welcome screen. Do not verify automatically on page load. */
 updateBarrier();
 $("dashboard").hidden = true;
 $("welcome").hidden = false;
-
-verify().then(connected => {
-  if (connected) {
-    connectMarket();
-  }
-});
 </script>
 </body>
 </html>
