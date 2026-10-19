@@ -2,249 +2,268 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101827">
-  <title>TradeNova</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      background: #101827;
-      color: white;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 25px 12px;
-      margin: 0;
-    }
-    main {
-      max-width: 480px;
-      margin: auto;
-      padding: 22px;
-      background: #192538;
-      border-radius: 16px;
-    }
-    h1, h2 { color: #55dfb5; }
-    button {
-      padding: 15px;
-      width: 100%;
-      border: 0;
-      border-radius: 8px;
-      background: #55dfb5;
-      color: #101827;
-      font-weight: bold;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    button:disabled { opacity: 0.6; }
-    .panel {
-      background: #101827;
-      padding: 16px;
-      margin-top: 22px;
-      border-radius: 12px;
-      overflow-wrap: anywhere;
-    }
-    #price { font-size: 27px; }
-    #auth-status, #market-status {
-      overflow-wrap: anywhere;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>TradeNova Trading</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:16px;background:#101827;color:#fff;font-family:Arial,sans-serif}
+main{max-width:650px;margin:auto}
+h1,h2{color:#55dfb5}
+.panel{background:#192538;padding:18px;margin:14px 0;border-radius:12px}
+label{display:block;margin:12px 0 6px}
+select,input,button{width:100%;padding:12px;border-radius:7px;font-size:15px}
+select,input{background:#101827;color:#fff;border:1px solid #45556b}
+button{border:0;background:#55dfb5;color:#101827;font-weight:bold;margin-top:10px;cursor:pointer}
+button:disabled{opacity:.5}
+.danger{background:#f87171}
+.muted{color:#b9c7d9;font-size:13px}
+.status{overflow-wrap:anywhere;line-height:1.5}
+.price{font-size:30px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#trade-log{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}
+</style>
 </head>
 <body>
 <main>
-  <h1>TradeNova</h1>
-  <p>Connect your Deriv account to continue.</p>
+<h1>TradeNova</h1>
+<p>Deriv trading dashboard</p>
 
-  <button id="connect" type="button">Connect to Deriv</button>
-  <p id="auth-status" role="status" aria-live="polite">
-    Checking account connection...
-  </p>
-  <section class="panel">
-    <h2>Deriv Account</h2>
-    <p id="account-details">Account not verified.</p>
-  </section>
+<section class="panel">
+<h2>1. Deriv Connection</h2>
+<button id="oauth-button">Connect / Verify Deriv</button>
+<p id="auth-status" class="status">Checking saved connection...</p>
+<p id="account-info" class="muted">Account information not loaded.</p>
+</section>
 
-  <section class="panel">
-    <h2>Live Market</h2>
-    <p>Volatility 100 (1-second) Index</p>
-    <h1 id="price">Waiting for price...</h1>
-    <p id="market-status" role="status" aria-live="polite">
-      Connecting to market...
-    </p>
-  </section>
+<section class="panel">
+<h2>2. Account Selection</h2>
+<label for="account">Choose account</label>
+<select id="account">
+<option value="">Connect to Deriv first</option>
+</select>
+<button id="account-connect">Connect Selected Trading Account</button>
+<p id="trade-connection" class="status">Trading connection not connected.</p>
+<p id="balance" class="status">Balance: waiting for account connection</p>
+<p class="muted">Demo is selected by default. Real trades risk real money.</p>
+</section>
+
+<section class="panel">
+<h2>3. Live Market</h2>
+<p>Volatility 100 (1-second) Index</p>
+<div id="price" class="price">Waiting for price...</div>
+<p id="market-status" class="status">Connecting to market...</p>
+</section>
+
+<section class="panel">
+<h2>4. Options Trading</h2>
+<label for="symbol">Market</label>
+<select id="symbol">
+<option value="1HZ100V">Volatility 100 (1s) Index</option>
+<option value="1HZ75V">Volatility 75 (1s) Index</option>
+<option value="1HZ50V">Volatility 50 (1s) Index</option>
+<option value="R_100">Volatility 100 Index</option>
+<option value="R_75">Volatility 75 Index</option>
+<option value="R_50">Volatility 50 Index</option>
+<option value="R_25">Volatility 25 Index</option>
+<option value="R_10">Volatility 10 Index</option>
+</select>
+
+<label for="direction">Contract direction</label>
+<select id="direction">
+<option value="CALL">Rise</option>
+<option value="PUT">Fall</option>
+</select>
+
+<div class="grid">
+<div>
+<label for="stake">Stake (USD)</label>
+<input id="stake" type="number" min="0.35" max="100" step="0.01" value="1">
+</div>
+<div>
+<label for="duration">Duration (ticks)</label>
+<input id="duration" type="number" min="1" max="10" step="1" value="5">
+</div>
+</div>
+
+<button id="quote-button">Get Trade Quote</button>
+<p id="quote-status" class="status">No quote requested.</p>
+<button id="buy-button" disabled>Confirm & Buy Demo Contract</button>
+<button id="sell-button" class="danger" disabled>Sell Open Contract</button>
+<p id="trade-status" class="status">No trade placed.</p>
+<p id="contract-info" class="status"></p>
+<p class="muted">
+Only Options contracts are implemented here. A quote is not a trade.
+Check the selected account and price before buying. Contract availability
+depends on your account and Deriv's market rules.
+</p>
+</section>
+
+<section class="panel">
+<h2>5. Trade Activity</h2>
+<div id="trade-log">No trade activity yet.</div>
+</section>
 </main>
 
 <script>
 "use strict";
 
-(function () {
-  const CLIENT_ID = "34FHIu3inyzM68fO3UiBv";
-  const REDIRECT_URI =
-    "https://tradenova-phi.vercel.app/callback";
+const CLIENT_ID = "34FHIu3inyzM68fO3UiBv";
+const REDIRECT_URI = "https://tradenova-phi.vercel.app/callback";
+const AUTH_URL = "https://auth.deriv.com/oauth2/auth";
+const API = "https://api.derivws.com";
+const PUBLIC_WS = "wss://api.derivws.com/trading/v1/options/ws/public";
 
-  const AUTH_URL = "https://auth.deriv.com/oauth2/auth";
-  const ACCOUNTS_URL =
-    "https://api.derivws.com/trading/v1/options/accounts";
-  const MARKET_URL =
-    "wss://api.derivws.com/trading/v1/options/ws/public";
+const $ = id => document.getElementById(id);
 
-  const button = document.getElementById("connect");
-  const authStatus = document.getElementById("auth-status");
-  const accountDetails =
-    document.getElementById("account-details");
-  const price = document.getElementById("price");
-  const marketStatus = document.getElementById("market-status");
+let token = null;
+let accounts = [];
+let tradingSocket = null;
+let pending = new Map();
+let requestId = 10;
+let proposal = null;
+let openContractId = null;
+let currentBalance = null;
+let marketSocket = null;
+let marketRetry = null;
+let tradingBusy = false;
 
-  let connecting = false;
-  let socket = null;
-  let reconnectTimer = null;
-  let reconnectDelay = 3000;
-  let stopped = false;
+function setText(id, text) {
+  $(id).textContent = text;
+}
 
-  async function verifyAccount() {
-    let token;
+function getAccount() {
+  return accounts.find(a => accountId(a) === $("account").value);
+}
 
-    try {
-      token = sessionStorage.getItem("tradenova_access_token");
-    } catch (error) {
-      authStatus.textContent =
-        "Browser session storage is unavailable.";
-      return;
-    }
+function accountId(a) {
+  return a.account_id || a.accountId || a.loginid || "";
+}
 
-    if (!token) {
-      authStatus.textContent = "Not connected to Deriv.";
-      accountDetails.textContent = "Account not verified.";
-      return;
-    }
+function accountType(a) {
+  return String(a.account_type || a.type || "").toLowerCase();
+}
 
-    authStatus.textContent = "Verifying token with Deriv...";
-    accountDetails.textContent = "Checking account details...";
+function isDemo(a) {
+  return accountType(a).includes("demo") ||
+         accountId(a).startsWith("DOT");
+}
 
-    try {
-      const response = await fetch(ACCOUNTS_URL, {
-        method: "GET",
-        headers: {
-          "Authorization": "Bearer " + token,
-          "Accept": "application/json"
-        }
-      });
+function log(text) {
+  const old = $("trade-log").textContent;
+  $("trade-log").textContent =
+    (old === "No trade activity yet." ? "" : old + "\n\n") +
+    new Date().toLocaleString() + "\n" + text;
+}
 
-      let result;
-      try {
-        result = await response.json();
-      } catch (error) {
-        throw new Error("Deriv returned an unreadable response.");
-      }
+function readToken() {
+  try {
+    return sessionStorage.getItem("tradenova_access_token");
+  } catch {
+    return null;
+  }
+}
 
-      if (response.status === 401) {
-        authStatus.textContent =
-          "Token rejected. Please reconnect to Deriv.";
-        accountDetails.textContent =
-          "The saved token is invalid or expired.";
-        return;
-      }
+async function verifyAccount() {
+  token = readToken();
 
-      if (response.status === 403) {
-        authStatus.textContent =
-          "Deriv denied access. Check your authorization scope.";
-        accountDetails.textContent =
-          "Account verification was not permitted.";
-        return;
-      }
-
-      if (!response.ok) {
-        const message =
-          result?.errors?.[0]?.message ||
-          result?.error ||
-          "HTTP " + response.status;
-
-        throw new Error(message);
-      }
-
-      const accounts = result.data;
-
-      if (!Array.isArray(accounts) || accounts.length === 0) {
-        authStatus.textContent =
-          "Token accepted, but no trading accounts were returned.";
-        accountDetails.textContent =
-          "No account details available.";
-        return;
-      }
-
-      authStatus.textContent = "Deriv Connected — token verified.";
-
-      accountDetails.replaceChildren();
-
-      accounts.forEach(function (account, index) {
-        const item = document.createElement("p");
-        const id =
-          account.account_id ||
-          account.accountId ||
-          account.loginid ||
-          "Account " + (index + 1);
-
-        const currency = account.currency || "";
-        const type = account.account_type || account.type || "";
-        const balance = account.balance;
-
-        item.textContent =
-          "Account: " + id +
-          (type ? " | Type: " + type : "") +
-          (balance !== undefined
-            ? " | Balance: " + balance + " " + currency
-            : "");
-
-        accountDetails.appendChild(item);
-      });
-
-    } catch (error) {
-      authStatus.textContent =
-        "Account verification failed: " + error.message;
-      accountDetails.textContent =
-        "The connection is not yet confirmed. Check your internet or try again.";
-    }
+  if (!token) {
+    setText("auth-status", "Not connected. Tap Connect / Verify Deriv.");
+    return false;
   }
 
-  async function connectToDeriv() {
-    if (connecting) return;
+  setText("auth-status", "Verifying your Deriv token...");
 
-    connecting = true;
-    button.disabled = true;
-    authStatus.textContent = "Preparing Deriv authorization...";
-
-    try {
-      if (!window.crypto || !crypto.subtle) {
-        throw new Error("Open TradeNova in Chrome using HTTPS.");
+  try {
+    const response = await fetch(API + "/trading/v1/options/accounts", {
+      headers: {
+        "Authorization": "Bearer " + token,
+        "Accept": "application/json"
       }
+    });
 
-      const alphabet =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
-      const bytes = crypto.getRandomValues(new Uint8Array(64));
-      let verifier = "";
+    const result = await response.json();
 
-      for (let i = 0; i < bytes.length; i++) {
-        verifier += alphabet[bytes[i] % alphabet.length];
-      }
-
-      const digest = await crypto.subtle.digest(
-        "SHA-256",
-        new TextEncoder().encode(verifier)
+    if (!response.ok) {
+      throw new Error(
+        result?.errors?.[0]?.message ||
+        result?.error ||
+        "HTTP " + response.status
       );
+    }
 
+    accounts = Array.isArray(result.data)
+      ? result.data
+      : result.data?.accounts || [];
+
+    if (!accounts.length) {
+      throw new Error("No Options accounts were returned.");
+    }
+
+    const selector = $("account");
+    const oldSelection = selector.value;
+    selector.replaceChildren();
+
+    // Prefer demo by default.
+    accounts.sort((a, b) => Number(isDemo(b)) - Number(isDemo(a)));
+
+    accounts.forEach(a => {
+      const option = document.createElement("option");
+      option.value = accountId(a);
+      option.textContent =
+        accountId(a) + " — " +
+        (isDemo(a) ? "DEMO" : "REAL") +
+        (a.currency ? " (" + a.currency + ")" : "");
+      selector.appendChild(option);
+    });
+
+    if (accounts.some(a => accountId(a) === oldSelection)) {
+      selector.value = oldSelection;
+    } else {
+      const demo = accounts.find(isDemo);
+      if (demo) selector.value = accountId(demo);
+    }
+
+    setText("auth-status", "Deriv Connected — token verified.");
+
+    setText("account-info", accounts.map(a =>
+      accountId(a) + " | " +
+      (isDemo(a) ? "Demo" : "Real") +
+      " | Balance: " +
+      (a.balance !== undefined ? a.balance : "not supplied") +
+      " " + (a.currency || "")
+    ).join("\n"));
+
+    return true;
+  } catch (error) {
+    setText("auth-status", "Verification failed: " + error.message);
+    setText("account-info", "Account access could not be verified.");
+    return false;
+  }
+}
+
+function startOAuth() {
+  if (!window.crypto?.subtle) {
+    setText("auth-status", "Open this site in Chrome over HTTPS.");
+    return;
+  }
+
+  const bytes = crypto.getRandomValues(new Uint8Array(64));
+  const alphabet =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+  const verifier = Array.from(bytes, b => alphabet[b % alphabet.length]).join("");
+
+  crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier))
+    .then(digest => {
       const challenge = btoa(
         String.fromCharCode(...new Uint8Array(digest))
-      ).replace(/\+/g, "-")
-       .replace(/\//g, "_")
-       .replace(/=+$/, "");
+      ).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 
-      const stateBytes =
-        crypto.getRandomValues(new Uint8Array(16));
-
-      const state = Array.from(stateBytes)
-        .map(function (byte) {
-          return byte.toString(16).padStart(2, "0");
-        })
-        .join("");
+      const state = Array.from(
+        crypto.getRandomValues(new Uint8Array(16)),
+        b => b.toString(16).padStart(2, "0")
+      ).join("");
 
       sessionStorage.setItem("pkce_code_verifier", verifier);
       sessionStorage.setItem("oauth_state", state);
@@ -254,127 +273,462 @@
         client_id: CLIENT_ID,
         redirect_uri: REDIRECT_URI,
         scope: "trade",
-        state: state,
+        state,
         code_challenge: challenge,
         code_challenge_method: "S256"
       });
 
-      authStatus.textContent = "Opening Deriv authorization...";
-      window.location.assign(AUTH_URL + "?" + params.toString());
+      window.location.href = AUTH_URL + "?" + params.toString();
+    })
+    .catch(error => {
+      setText("auth-status", "Could not start login: " + error.message);
+    });
+}
 
-    } catch (error) {
-      connecting = false;
-      button.disabled = false;
-      authStatus.textContent =
-        "Could not start authorization: " + error.message;
-    }
+function closeTradingSocket() {
+  if (tradingSocket) {
+    tradingSocket.onclose = null;
+    tradingSocket.close();
+    tradingSocket = null;
   }
 
-  button.addEventListener("click", connectToDeriv);
+  for (const item of pending.values()) {
+    clearTimeout(item.timer);
+    item.reject(new Error("Trading connection was closed."));
+  }
+  pending.clear();
 
-  // Check whether the saved token is actually accepted.
-  verifyAccount();
+  proposal = null;
+  openContractId = null;
+  currentBalance = null;
 
-  // Public market prices do not require an account token.
-  function connectMarket() {
-    clearTimeout(reconnectTimer);
+  $("buy-button").disabled = true;
+  $("sell-button").disabled = true;
+  setText("balance", "Balance: not connected");
+}
 
-    if (stopped) return;
+async function connectTrading() {
+  if (!token) {
+    setText("trade-connection", "Connect to Deriv first.");
+    return;
+  }
 
-    if (!navigator.onLine) {
-      marketStatus.textContent = "Device is offline.";
+  const account = getAccount();
+
+  if (!account) {
+    setText("trade-connection", "Choose an account first.");
+    return;
+  }
+
+  closeTradingSocket();
+  setText("trade-connection", "Requesting secure trading connection...");
+
+  try {
+    const id = accountId(account);
+
+    const response = await fetch(
+      API + "/trading/v1/options/accounts/" +
+      encodeURIComponent(id) + "/otp",
+      {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + token,
+          "Accept": "application/json"
+        }
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result?.errors?.[0]?.message ||
+        result?.error ||
+        "Could not obtain trading connection."
+      );
+    }
+
+    const wsUrl = result?.data?.url;
+    if (!wsUrl || !wsUrl.startsWith("wss://")) {
+      throw new Error("Deriv did not return a valid secure WebSocket URL.");
+    }
+
+    const selectedAccountId = id;
+    tradingSocket = new WebSocket(wsUrl);
+
+    tradingSocket.onopen = () => {
+      if ($("account").value !== selectedAccountId) {
+        closeTradingSocket();
+        return;
+      }
+
+      setText(
+        "trade-connection",
+        "Trading connection ready: " +
+        (isDemo(account) ? "DEMO" : "REAL") + "."
+      );
+
+      sendRequest({ balance: 1, subscribe: 1 }).catch(() => {});
+    };
+
+    tradingSocket.onmessage = event => {
+      let message;
+      try {
+        message = JSON.parse(event.data);
+      } catch {
+        return;
+      }
+
+      if (message.req_id && pending.has(message.req_id)) {
+        const item = pending.get(message.req_id);
+        pending.delete(message.req_id);
+        clearTimeout(item.timer);
+
+        if (message.error) {
+          item.reject(new Error(message.error.message || "Deriv request failed."));
+        } else {
+          item.resolve(message);
+        }
+      }
+
+      if (message.balance) {
+        currentBalance = message.balance.balance;
+        setText(
+          "balance",
+          "Balance: " + currentBalance + " " +
+          (message.balance.currency || "")
+        );
+      }
+
+      if (message.proposal_open_contract) {
+        const c = message.proposal_open_contract;
+        setText(
+          "contract-info",
+          "Contract: " + (c.contract_id || openContractId || "") +
+          "\nStatus: " + (c.status || "unknown") +
+          "\nBuy price: " + (c.buy_price ?? "—") +
+          "\nCurrent value: " + (c.bid_price ?? "—") +
+          "\nProfit/Loss: " + (c.profit ?? "—")
+        );
+
+        if (c.is_sold || c.status === "sold" ||
+            c.status === "won" || c.status === "lost") {
+          setText("trade-status", "Contract finished: " + c.status);
+          $("sell-button").disabled = true;
+          openContractId = null;
+          log("Contract finished: " + c.status +
+              "; profit/loss: " + (c.profit ?? "not supplied"));
+        }
+      }
+    };
+
+    tradingSocket.onerror = () => {
+      setText("trade-connection", "Trading WebSocket error.");
+    };
+
+    tradingSocket.onclose = () => {
+      if (tradingSocket) {
+        setText("trade-connection", "Trading connection closed. Reconnect to continue.");
+      }
+      $("buy-button").disabled = true;
+      $("sell-button").disabled = true;
+    };
+
+  } catch (error) {
+    setText("trade-connection", "Connection failed: " + error.message);
+  }
+}
+
+function sendRequest(payload) {
+  return new Promise((resolve, reject) => {
+    if (!tradingSocket || tradingSocket.readyState !== WebSocket.OPEN) {
+      reject(new Error("Connect the selected trading account first."));
       return;
     }
 
-    if (socket &&
-        (socket.readyState === WebSocket.OPEN ||
-         socket.readyState === WebSocket.CONNECTING)) {
-      return;
-    }
+    const id = ++requestId;
+    payload.req_id = id;
 
-    marketStatus.textContent = "Connecting to Deriv market...";
+    const timer = setTimeout(() => {
+      pending.delete(id);
+      reject(new Error("Deriv did not respond in time."));
+    }, 15000);
+
+    pending.set(id, { resolve, reject, timer });
 
     try {
-      socket = new WebSocket(MARKET_URL);
-
-      socket.onopen = function () {
-        reconnectDelay = 3000;
-        marketStatus.textContent = "Connected. Requesting prices...";
-
-        socket.send(JSON.stringify({
-          ticks: "1HZ100V",
-          subscribe: 1,
-          req_id: 1
-        }));
-      };
-
-      socket.onmessage = function (event) {
-        let data;
-
-        try {
-          data = JSON.parse(event.data);
-        } catch (error) {
-          marketStatus.textContent = "Invalid market response.";
-          return;
-        }
-
-        if (data.error) {
-          marketStatus.textContent =
-            "Market error: " + data.error.message;
-          return;
-        }
-
-        if (data.tick && data.tick.quote !== undefined) {
-          price.textContent = data.tick.quote;
-          marketStatus.textContent = "LIVE: Prices are updating.";
-        }
-      };
-
-      socket.onerror = function () {
-        marketStatus.textContent = "Market connection error.";
-      };
-
-      socket.onclose = function (event) {
-        if (stopped) return;
-
-        marketStatus.textContent =
-          "Market disconnected (" + event.code + "). Retrying...";
-
-        reconnectTimer = setTimeout(function () {
-          reconnectDelay = Math.min(reconnectDelay * 2, 30000);
-          connectMarket();
-        }, reconnectDelay);
-      };
-
+      tradingSocket.send(JSON.stringify(payload));
     } catch (error) {
-      marketStatus.textContent =
-        "Could not start market: " + error.message;
+      clearTimeout(timer);
+      pending.delete(id);
+      reject(error);
+    }
+  });
+}
 
-      reconnectTimer = setTimeout(connectMarket, 5000);
+async function getQuote() {
+  if (tradingBusy) return;
+
+  const account = getAccount();
+  if (!account) {
+    setText("quote-status", "Choose an account first.");
+    return;
+  }
+
+  if (!tradingSocket || tradingSocket.readyState !== WebSocket.OPEN) {
+    setText("quote-status", "Connect the selected trading account first.");
+    return;
+  }
+
+  const stake = Number($("stake").value);
+  const duration = Number($("duration").value);
+
+  if (!Number.isFinite(stake) || stake <= 0 ||
+      !Number.isInteger(duration) || duration < 1 || duration > 10) {
+    setText("quote-status", "Enter a valid stake and duration (1–10 ticks).");
+    return;
+  }
+
+  if (!isDemo(account)) {
+    setText("quote-status", "REAL account selected. Check stake and market carefully.");
+  }
+
+  proposal = null;
+  $("buy-button").disabled = true;
+  setText("quote-status", "Requesting price proposal...");
+
+  try {
+    const response = await sendRequest({
+      proposal: 1,
+      amount: stake,
+      basis: "stake",
+      contract_type: $("direction").value,
+      currency: account.currency || "USD",
+      duration,
+      duration_unit: "t",
+      underlying_symbol: $("symbol").value
+    });
+
+    proposal = response.proposal;
+
+    if (!proposal || !proposal.id) {
+      throw new Error("Deriv did not return a usable proposal.");
+    }
+
+    setText(
+      "quote-status",
+      "Quote received. Ask price: " + proposal.ask_price +
+      " | Potential payout: " + (proposal.payout ?? "not supplied") +
+      " | Expires: " + (proposal.date_expiry ?? "as quoted")
+    );
+
+    $("buy-button").textContent =
+      "Confirm & Buy " + (isDemo(account) ? "Demo" : "REAL") + " Contract";
+    $("buy-button").disabled = false;
+
+  } catch (error) {
+    setText("quote-status", "Quote failed: " + error.message);
+  }
+}
+
+async function buyContract() {
+  if (tradingBusy || !proposal) return;
+
+  const account = getAccount();
+  if (!account) return;
+
+  if (!isDemo(account)) {
+    const confirmation = confirm(
+      "REAL MONEY WARNING\n\n" +
+      "You selected real account " + accountId(account) + ".\n" +
+      "Stake: " + $("stake").value + " " + (account.currency || "USD") + "\n" +
+      "Market: " + $("symbol").value + "\n" +
+      "Direction: " + $("direction").selectedOptions[0].textContent + "\n\n" +
+      "A real-money contract can lose its full stake. Place this trade?"
+    );
+
+    if (!confirmation) {
+      setText("trade-status", "Real trade cancelled.");
+      return;
+    }
+  } else {
+    if (!confirm(
+      "Place this DEMO trade?\nStake: " + $("stake").value +
+      " " + (account.currency || "USD") +
+      "\nDirection: " + $("direction").selectedOptions[0].textContent +
+      "\nMarket: " + $("symbol").value
+    )) {
+      setText("trade-status", "Demo trade cancelled.");
+      return;
     }
   }
 
-  window.addEventListener("online", function () {
-    reconnectDelay = 3000;
-    connectMarket();
-  });
+  tradingBusy = true;
+  $("buy-button").disabled = true;
+  setText("trade-status", "Sending purchase request...");
 
-  window.addEventListener("offline", function () {
-    marketStatus.textContent = "Device is offline.";
-  });
+  try {
+    const result = await sendRequest({
+      buy: proposal.id,
+      price: Number(proposal.ask_price)
+    });
 
-  window.addEventListener("pagehide", function () {
-    stopped = true;
-    clearTimeout(reconnectTimer);
-
-    if (socket) {
-      socket.onclose = null;
-      socket.close();
+    if (!result.buy || !result.buy.contract_id) {
+      throw new Error("Deriv did not confirm a contract purchase.");
     }
-  });
 
+    openContractId = result.buy.contract_id;
+    proposal = null;
+
+    setText("trade-status", "Purchase confirmed by Deriv.");
+    setText(
+      "contract-info",
+      "Contract ID: " + openContractId +
+      "\nBuy price: " + (result.buy.buy_price ?? "not supplied") +
+      "\nStatus: waiting for contract updates"
+    );
+
+    $("sell-button").disabled = false;
+    log("Purchase confirmed. Contract ID: " + openContractId);
+
+    await sendRequest({
+      proposal_open_contract: 1,
+      contract_id: openContractId,
+      subscribe: 1
+    }).catch(error => {
+      setText("trade-status",
+        "Purchase confirmed; contract update subscription failed: " +
+        error.message);
+    });
+
+  } catch (error) {
+    setText("trade-status", "Purchase failed: " + error.message);
+    log("Purchase failed: " + error.message);
+  } finally {
+    tradingBusy = false;
+    $("buy-button").disabled = !proposal;
+  }
+}
+
+async function sellContract() {
+  if (!openContractId || tradingBusy) return;
+
+  if (!confirm("Request to sell this open contract at the available price?")) {
+    return;
+  }
+
+  tradingBusy = true;
+  $("sell-button").disabled = true;
+  setText("trade-status", "Sending sell request...");
+
+  try {
+    const result = await sendRequest({
+      sell: openContractId,
+      price: 0
+    });
+
+    if (result.sell) {
+      setText("trade-status", "Sell request accepted by Deriv.");
+      log("Sell response received for contract " + openContractId);
+      openContractId = null;
+    } else {
+      throw new Error("No sell confirmation returned.");
+    }
+  } catch (error) {
+    setText("trade-status", "Sell failed: " + error.message);
+    $("sell-button").disabled = !openContractId;
+  } finally {
+    tradingBusy = false;
+  }
+}
+
+function connectMarket() {
+  clearTimeout(marketRetry);
+
+  if (marketSocket &&
+      (marketSocket.readyState === WebSocket.OPEN ||
+       marketSocket.readyState === WebSocket.CONNECTING)) return;
+
+  setText("market-status", "Connecting to public market...");
+
+  try {
+    marketSocket = new WebSocket(PUBLIC_WS);
+
+    marketSocket.onopen = () => {
+      setText("market-status", "Connected; requesting live prices...");
+      marketSocket.send(JSON.stringify({
+        ticks: $("symbol").value,
+        subscribe: 1,
+        req_id: 1
+      }));
+    };
+
+    marketSocket.onmessage = event => {
+      let message;
+      try { message = JSON.parse(event.data); } catch { return; }
+
+      if (message.error) {
+        setText("market-status", "Market error: " + message.error.message);
+        return;
+      }
+
+      if (message.tick && message.tick.quote !== undefined) {
+        setText("price", message.tick.quote);
+        setText("market-status", "Live market price updating.");
+      }
+    };
+
+    marketSocket.onerror = () => {
+      setText("market-status", "Market connection error.");
+    };
+
+    marketSocket.onclose = () => {
+      setText("market-status", "Market disconnected. Retrying...");
+      marketRetry = setTimeout(connectMarket, 5000);
+    };
+  } catch (error) {
+    setText("market-status", "Market error: " + error.message);
+    marketRetry = setTimeout(connectMarket, 5000);
+  }
+}
+
+$("oauth-button").addEventListener("click", async () => {
+  if (readToken()) {
+    const ok = await verifyAccount();
+    if (ok) setText("auth-status", "Deriv Connected — token verified.");
+  } else {
+    startOAuth();
+  }
+});
+
+$("account-connect").addEventListener("click", connectTrading);
+$("quote-button").addEventListener("click", getQuote);
+$("buy-button").addEventListener("click", buyContract);
+$("sell-button").addEventListener("click", sellContract);
+
+$("account").addEventListener("change", () => {
+  closeTradingSocket();
+  proposal = null;
+  setText("trade-connection", "Account changed. Connect it to trade.");
+  setText("quote-status", "Select an account and connect before requesting a quote.");
+  setText("trade-status", "No new trade placed.");
+  $("buy-button").disabled = true;
+});
+
+$("symbol").addEventListener("change", () => {
+  if (marketSocket) {
+    marketSocket.onclose = null;
+    marketSocket.close();
+    marketSocket = null;
+  }
   connectMarket();
-})();
+  proposal = null;
+  $("buy-button").disabled = true;
+  setText("quote-status", "Market changed. Request a new quote.");
+});
+
+verifyAccount();
+connectMarket();
 </script>
 </body>
 </html>
