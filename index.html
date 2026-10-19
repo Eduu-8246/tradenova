@@ -6,10 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101827">
   <title>TradeNova</title>
-
   <style>
     * { box-sizing: border-box; }
-
     body {
       background: #101827;
       color: white;
@@ -18,7 +16,6 @@
       padding: 25px 12px;
       margin: 0;
     }
-
     main {
       max-width: 480px;
       margin: auto;
@@ -26,9 +23,7 @@
       background: #192538;
       border-radius: 16px;
     }
-
     h1, h2 { color: #55dfb5; }
-
     button {
       padding: 15px;
       width: 100%;
@@ -40,12 +35,7 @@
       font-size: 16px;
       cursor: pointer;
     }
-
-    button:disabled {
-      opacity: 0.6;
-      cursor: wait;
-    }
-
+    button:disabled { opacity: 0.6; }
     .panel {
       background: #101827;
       padding: 16px;
@@ -53,37 +43,32 @@
       border-radius: 12px;
       overflow-wrap: anywhere;
     }
-
-    #price {
-      font-size: 27px;
-      overflow-wrap: anywhere;
-    }
-
+    #price { font-size: 27px; }
     #auth-status, #market-status {
       overflow-wrap: anywhere;
     }
   </style>
 </head>
-
 <body>
 <main>
   <h1>TradeNova</h1>
   <p>Connect your Deriv account to continue.</p>
 
-  <button id="connect" type="button">
-    Connect to Deriv
-  </button>
-
+  <button id="connect" type="button">Connect to Deriv</button>
   <p id="auth-status" role="status" aria-live="polite">
-    Ready to connect.
+    Checking account connection...
   </p>
+  <section class="panel">
+    <h2>Deriv Account</h2>
+    <p id="account-details">Account not verified.</p>
+  </section>
 
   <section class="panel">
     <h2>Live Market</h2>
     <p>Volatility 100 (1-second) Index</p>
     <h1 id="price">Waiting for price...</h1>
     <p id="market-status" role="status" aria-live="polite">
-      Starting market connection...
+      Connecting to market...
     </p>
   </section>
 </main>
@@ -97,34 +82,126 @@
     "https://tradenova-phi.vercel.app/callback";
 
   const AUTH_URL = "https://auth.deriv.com/oauth2/auth";
+  const ACCOUNTS_URL =
+    "https://api.derivws.com/trading/v1/options/accounts";
   const MARKET_URL =
     "wss://api.derivws.com/trading/v1/options/ws/public";
 
   const button = document.getElementById("connect");
   const authStatus = document.getElementById("auth-status");
+  const accountDetails =
+    document.getElementById("account-details");
   const price = document.getElementById("price");
   const marketStatus = document.getElementById("market-status");
 
+  let connecting = false;
   let socket = null;
   let reconnectTimer = null;
   let reconnectDelay = 3000;
   let stopped = false;
-  let connecting = false;
 
-  function showAuthStatus() {
+  async function verifyAccount() {
+    let token;
+
     try {
-      const token = sessionStorage.getItem(
-        "tradenova_access_token"
-      );
-
-      if (token) {
-        authStatus.textContent =
-          "A previous session token exists. Its validity is unverified.";
-      } else {
-        authStatus.textContent = "Not connected.";
-      }
+      token = sessionStorage.getItem("tradenova_access_token");
     } catch (error) {
-      authStatus.textContent = "Ready to connect.";
+      authStatus.textContent =
+        "Browser session storage is unavailable.";
+      return;
+    }
+
+    if (!token) {
+      authStatus.textContent = "Not connected to Deriv.";
+      accountDetails.textContent = "Account not verified.";
+      return;
+    }
+
+    authStatus.textContent = "Verifying token with Deriv...";
+    accountDetails.textContent = "Checking account details...";
+
+    try {
+      const response = await fetch(ACCOUNTS_URL, {
+        method: "GET",
+        headers: {
+          "Authorization": "Bearer " + token,
+          "Accept": "application/json"
+        }
+      });
+
+      let result;
+      try {
+        result = await response.json();
+      } catch (error) {
+        throw new Error("Deriv returned an unreadable response.");
+      }
+
+      if (response.status === 401) {
+        authStatus.textContent =
+          "Token rejected. Please reconnect to Deriv.";
+        accountDetails.textContent =
+          "The saved token is invalid or expired.";
+        return;
+      }
+
+      if (response.status === 403) {
+        authStatus.textContent =
+          "Deriv denied access. Check your authorization scope.";
+        accountDetails.textContent =
+          "Account verification was not permitted.";
+        return;
+      }
+
+      if (!response.ok) {
+        const message =
+          result?.errors?.[0]?.message ||
+          result?.error ||
+          "HTTP " + response.status;
+
+        throw new Error(message);
+      }
+
+      const accounts = result.data;
+
+      if (!Array.isArray(accounts) || accounts.length === 0) {
+        authStatus.textContent =
+          "Token accepted, but no trading accounts were returned.";
+        accountDetails.textContent =
+          "No account details available.";
+        return;
+      }
+
+      authStatus.textContent = "Deriv Connected — token verified.";
+
+      accountDetails.replaceChildren();
+
+      accounts.forEach(function (account, index) {
+        const item = document.createElement("p");
+        const id =
+          account.account_id ||
+          account.accountId ||
+          account.loginid ||
+          "Account " + (index + 1);
+
+        const currency = account.currency || "";
+        const type = account.account_type || account.type || "";
+        const balance = account.balance;
+
+        item.textContent =
+          "Account: " + id +
+          (type ? " | Type: " + type : "") +
+          (balance !== undefined
+            ? " | Balance: " + balance + " " + currency
+            : "");
+
+        accountDetails.appendChild(item);
+      });
+
+    } catch (error) {
+      authStatus.textContent =
+        "Account verification failed: " + error.message;
+      accountDetails.textContent =
+        "The connection is not yet confirmed. Check your internet or try again.";
     }
   }
 
@@ -133,49 +210,33 @@
 
     connecting = true;
     button.disabled = true;
-    authStatus.textContent =
-      "Preparing secure Deriv authorization...";
+    authStatus.textContent = "Preparing Deriv authorization...";
 
     try {
-      if (!window.crypto ||
-          !window.crypto.subtle ||
-          !window.sessionStorage) {
-        throw new Error(
-          "Secure browser features are unavailable. Open this site in Chrome over HTTPS."
-        );
+      if (!window.crypto || !crypto.subtle) {
+        throw new Error("Open TradeNova in Chrome using HTTPS.");
       }
 
-      // Generate a fresh PKCE verifier.
       const alphabet =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
-
-      const randomBytes =
-        crypto.getRandomValues(new Uint8Array(64));
-
+      const bytes = crypto.getRandomValues(new Uint8Array(64));
       let verifier = "";
 
-      for (let i = 0; i < randomBytes.length; i++) {
-        verifier += alphabet[
-          randomBytes[i] % alphabet.length
-        ];
+      for (let i = 0; i < bytes.length; i++) {
+        verifier += alphabet[bytes[i] % alphabet.length];
       }
 
-      // Create the SHA-256 PKCE challenge.
       const digest = await crypto.subtle.digest(
         "SHA-256",
         new TextEncoder().encode(verifier)
       );
 
       const challenge = btoa(
-        String.fromCharCode(
-          ...new Uint8Array(digest)
-        )
-      )
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=+$/, "");
+        String.fromCharCode(...new Uint8Array(digest))
+      ).replace(/\+/g, "-")
+       .replace(/\//g, "_")
+       .replace(/=+$/, "");
 
-      // Generate a unique OAuth state value.
       const stateBytes =
         crypto.getRandomValues(new Uint8Array(16));
 
@@ -185,16 +246,8 @@
         })
         .join("");
 
-      // Save values before redirecting to Deriv.
-      sessionStorage.setItem(
-        "pkce_code_verifier",
-        verifier
-      );
-
-      sessionStorage.setItem(
-        "oauth_state",
-        state
-      );
+      sessionStorage.setItem("pkce_code_verifier", verifier);
+      sessionStorage.setItem("oauth_state", state);
 
       const params = new URLSearchParams({
         response_type: "code",
@@ -206,37 +259,30 @@
         code_challenge_method: "S256"
       });
 
-      authStatus.textContent =
-        "Opening Deriv authorization...";
-
-      window.location.assign(
-        AUTH_URL + "?" + params.toString()
-      );
+      authStatus.textContent = "Opening Deriv authorization...";
+      window.location.assign(AUTH_URL + "?" + params.toString());
 
     } catch (error) {
       connecting = false;
       button.disabled = false;
-
       authStatus.textContent =
-        "Could not start authorization: " +
-        error.message;
+        "Could not start authorization: " + error.message;
     }
   }
 
-  button.addEventListener(
-    "click",
-    connectToDeriv
-  );
+  button.addEventListener("click", connectToDeriv);
 
-  showAuthStatus();
+  // Check whether the saved token is actually accepted.
+  verifyAccount();
 
-  // Public market data; no account token is needed.
+  // Public market prices do not require an account token.
   function connectMarket() {
     clearTimeout(reconnectTimer);
 
-    if (stopped || !navigator.onLine) {
-      marketStatus.textContent =
-        "Waiting for an internet connection...";
+    if (stopped) return;
+
+    if (!navigator.onLine) {
+      marketStatus.textContent = "Device is offline.";
       return;
     }
 
@@ -246,17 +292,14 @@
       return;
     }
 
-    marketStatus.textContent =
-      "Connecting to Deriv market...";
+    marketStatus.textContent = "Connecting to Deriv market...";
 
     try {
       socket = new WebSocket(MARKET_URL);
 
       socket.onopen = function () {
         reconnectDelay = 3000;
-
-        marketStatus.textContent =
-          "Connected. Requesting live prices...";
+        marketStatus.textContent = "Connected. Requesting prices...";
 
         socket.send(JSON.stringify({
           ticks: "1HZ100V",
@@ -271,8 +314,7 @@
         try {
           data = JSON.parse(event.data);
         } catch (error) {
-          marketStatus.textContent =
-            "Could not read market response.";
+          marketStatus.textContent = "Invalid market response.";
           return;
         }
 
@@ -282,33 +324,24 @@
           return;
         }
 
-        if (data.tick &&
-            data.tick.quote !== undefined) {
+        if (data.tick && data.tick.quote !== undefined) {
           price.textContent = data.tick.quote;
-
-          marketStatus.textContent =
-            "LIVE: Prices are updating.";
+          marketStatus.textContent = "LIVE: Prices are updating.";
         }
       };
 
       socket.onerror = function () {
-        marketStatus.textContent =
-          "Market connection error. Retrying...";
+        marketStatus.textContent = "Market connection error.";
       };
 
       socket.onclose = function (event) {
         if (stopped) return;
 
         marketStatus.textContent =
-          "Market disconnected (" +
-          event.code + "). Retrying...";
+          "Market disconnected (" + event.code + "). Retrying...";
 
         reconnectTimer = setTimeout(function () {
-          reconnectDelay = Math.min(
-            reconnectDelay * 2,
-            30000
-          );
-
+          reconnectDelay = Math.min(reconnectDelay * 2, 30000);
           connectMarket();
         }, reconnectDelay);
       };
@@ -317,10 +350,7 @@
       marketStatus.textContent =
         "Could not start market: " + error.message;
 
-      reconnectTimer = setTimeout(
-        connectMarket,
-        5000
-      );
+      reconnectTimer = setTimeout(connectMarket, 5000);
     }
   }
 
@@ -330,8 +360,7 @@
   });
 
   window.addEventListener("offline", function () {
-    marketStatus.textContent =
-      "Your device is offline.";
+    marketStatus.textContent = "Device is offline.";
   });
 
   window.addEventListener("pagehide", function () {
