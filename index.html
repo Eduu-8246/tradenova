@@ -139,9 +139,11 @@
     clearTimeout(reconnectTimer);
     marketStatus.textContent = "Connecting to Deriv market...";
 
-    try {
-      socket = new WebSocket(
-        "wss://ws.derivws.com/websockets/v3?app_id=1089"
+        
+socket = new WebSocket(
+  "wss://api.derivws.com/trading/v1/options/ws/public"
+);
+
       );
 
       socket.onopen = function () {
