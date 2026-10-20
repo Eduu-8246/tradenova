@@ -1,121 +1,107 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TradeNova | Deriv Connection</title>
-  <style>
-    body {
-      background: #101827;
-      color: white;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 30px 15px;
-    }
-    main {
-      max-width: 460px;
-      margin: 40px auto;
-      padding: 24px;
-      background: #192538;
-      border-radius: 16px;
-    }
-    h1 { color: #55dfb5; }
-    a { color: #55dfb5; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TradeNova Connection</title>
+<style>
+body {
+  background:#101827;
+  color:white;
+  font-family:Arial,sans-serif;
+  text-align:center;
+  padding:30px 15px;
+}
+main {
+  max-width:460px;
+  margin:40px auto;
+  padding:24px;
+  background:#192538;
+  border-radius:16px;
+}
+h1 { color:#55dfb5; }
+a { color:#55dfb5; }
+</style>
 </head>
 <body>
-  <main>
-    <h1>TradeNova</h1>
-    <p id="status">Checking Deriv authorization...</p>
-    <p id="detail"></p>
-    <p><a href="/">Return to TradeNova</a></p>
-  </main>
+<main>
+<h1>TradeNova</h1>
+<p id="status">Checking Deriv authorization...</p>
+<p id="detail"></p>
+<p><a href="https://tradenova-phi.vercel.app/">Open TradeNova Dashboard</a></p>
+</main>
 
-  <script>
-    (async function () {
-      const status = document.getElementById("status");
-      const detail = document.getElementById("detail");
-      const params = new URLSearchParams(window.location.search);
+<script>
+(async function () {
+  const status = document.getElementById("status");
+  const detail = document.getElementById("detail");
+  const params = new URLSearchParams(location.search);
 
-      const code = params.get("code");
-      const state = params.get("state");
-      const error = params.get("error");
+  const code = params.get("code");
+  const state = params.get("state");
+  const error = params.get("error");
 
-      if (error) {
-        status.textContent = "Deriv authorization failed.";
-        detail.textContent =
-          error + (params.get("error_description")
-            ? ": " + params.get("error_description")
-            : "");
-        return;
-      }
+  if (error) {
+    status.textContent = "Deriv authorization failed.";
+    detail.textContent = error + (params.get("error_description")
+      ? ": " + params.get("error_description") : "");
+    return;
+  }
 
-      if (!code || !state) {
-        status.textContent = "Authorization code missing.";
-        detail.textContent =
-          "The callback URL did not contain the required code and state. Return to TradeNova and connect again.";
-        return;
-      }
+  if (!code || !state) {
+    status.textContent = "Authorization response missing.";
+    detail.textContent = "Return to the dashboard and connect again.";
+    return;
+  }
 
-      const savedState = sessionStorage.getItem("oauth_state");
-      const verifier =
-        sessionStorage.getItem("pkce_code_verifier");
+  const savedState = sessionStorage.getItem("oauth_state");
+  const verifier = sessionStorage.getItem("pkce_code_verifier");
 
-      if (!savedState || state !== savedState || !verifier) {
-        status.textContent = "Security check failed.";
-        detail.textContent =
-          "The login session could not be verified. Start again from TradeNova in the same browser tab.";
-        return;
-      }
+  if (!savedState || state !== savedState || !verifier) {
+    status.textContent = "Security check failed.";
+    detail.textContent = "Open TradeNova in the same browser tab and reconnect.";
+    return;
+  }
 
-      status.textContent = "Exchanging authorization code securely...";
+  status.textContent = "Completing secure connection...";
 
-      try {
-        const response = await fetch("/api/token", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            code: code,
-            code_verifier: verifier,
-            redirect_uri:
-              "https://tradenova-phi.vercel.app/callback"
-          })
-        });
+  try {
+    const response = await fetch("/api/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        code: code,
+        code_verifier: verifier,
+        redirect_uri: "https://tradenova-phi.vercel.app/callback"
+      })
+    });
 
-        const data = await response.json();
+    const data = await response.json();
 
-        if (!response.ok) {
-          throw new Error(
-            data.error || "Token exchange failed."
-          );
-        }
+    if (!response.ok) {
+      throw new Error(data.error || "Token exchange failed.");
+    }
 
-        if (!data.access_token) {
-          throw new Error(
-            "Deriv did not return an access token."
-          );
-        }
+    if (!data.access_token) {
+      throw new Error("No access token was returned.");
+    }
 
-        sessionStorage.setItem(
-          "tradenova_access_token",
-          data.access_token
-        );
+    sessionStorage.setItem("tradenova_access_token", data.access_token);
+    sessionStorage.removeItem("oauth_state");
+    sessionStorage.removeItem("pkce_code_verifier");
 
-        sessionStorage.removeItem("oauth_state");
-        sessionStorage.removeItem("pkce_code_verifier");
+    status.textContent = "Deriv authorization successful!";
+    detail.textContent = "Returning to your dashboard...";
 
-        status.textContent = "Deriv authorization successful!";
-        detail.textContent =
-          "The access token was received. Return to TradeNova.";
+    setTimeout(function () {
+      window.location.replace("https://tradenova-phi.vercel.app/");
+    }, 1200);
 
-      } catch (error) {
-        status.textContent = "Connection could not be completed.";
-        detail.textContent = error.message;
-      }
-    })();
-  </script>
+  } catch (err) {
+    status.textContent = "Connection could not be completed.";
+    detail.textContent = err.message;
+  }
+})();
+</script>
 </body>
 </html>
