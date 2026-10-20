@@ -3,285 +3,400 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TradeNova</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1120">
+<title>TradeNova | Trading Dashboard</title>
 <style>
+:root{--bg:#0b1120;--panel:#131e30;--panel2:#19273b;--line:#263750;--text:#f4f7fb;--muted:#94a7bf;--green:#40e0b0;--gold:#f2c66d;--red:#ff6b78}
 *{box-sizing:border-box}
-body{margin:0;padding:15px;background:#101827;color:white;font-family:Arial,sans-serif}
-main{max-width:650px;margin:auto}
-h1,h2{color:#55dfb5}
-.panel{background:#192538;padding:16px;margin:14px 0;border-radius:12px}
-label{display:block;margin:12px 0 6px}
-select,input,button{width:100%;padding:12px;border-radius:7px;font-size:15px}
-select,input{background:#101827;color:white;border:1px solid #45556b}
-button{border:0;background:#55dfb5;color:#101827;font-weight:bold;margin-top:10px}
-button:disabled{opacity:.5}
-.danger{background:#f87171}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.status{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}
-.muted{font-size:13px;color:#bdc9d9}
-.price{font-size:28px}
-#welcome{
-  max-width:650px;margin:12vh auto 0;padding:28px 20px;
-  background:#192538;border:1px solid #2e4358;
-  border-radius:16px;text-align:center
+body{margin:0;background:var(--bg);color:var(--text);font:15px Arial,sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer;border:0;border-radius:10px;padding:12px 15px;font-weight:700}
+button:disabled{opacity:.45;cursor:not-allowed}
+.primary{background:var(--green);color:#07151a}
+.secondary{background:#263750;color:white;border:1px solid #344963}
+.danger{background:#5b2836;color:#ffdce1}
+.muted{color:var(--muted);font-size:13px;line-height:1.6}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 20px;border-bottom:1px solid var(--line);background:#0d1627;position:sticky;top:0;z-index:5}
+.brand{font-size:22px;font-weight:900;letter-spacing:.4px}
+.brand span{color:var(--green)}
+.pill{border:1px solid #315447;color:var(--green);border-radius:30px;padding:7px 10px;font-size:12px}
+main{max-width:1200px;margin:auto;padding:22px}
+#welcome{max-width:760px;margin:8vh auto;padding:35px 24px;text-align:center;background:linear-gradient(145deg,#172a40,#111b2c);border:1px solid var(--line);border-radius:24px}
+.hero-tag{color:var(--green);font-weight:bold;letter-spacing:2px;font-size:12px}
+#welcome h1{font-size:clamp(38px,8vw,64px);margin:18px 0}
+#welcome h1 span{color:var(--green)}
+#welcome p{max-width:540px;margin:12px auto 22px;line-height:1.8;color:var(--muted)}
+#welcome button{min-width:230px}
+#dashboard[hidden],#welcome[hidden]{display:none!important}
+.layout{display:grid;grid-template-columns:210px minmax(0,1fr);gap:20px}
+nav{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px;height:max-content;position:sticky;top:90px}
+nav button{display:block;width:100%;text-align:left;background:transparent;color:var(--muted);margin:3px 0}
+nav button.active,nav button:hover{background:#20334a;color:var(--green)}
+.content{min-width:0}
+h1,h2,h3,p{margin-top:0}
+h1{font-size:27px}
+h2{font-size:18px}
+h3{font-size:15px}
+.subtitle{color:var(--muted);margin-top:-8px;margin-bottom:22px}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-bottom:17px}
+.card,.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;min-width:0}
+.card small{display:block;color:var(--muted);margin-bottom:12px}
+.big{font-size:25px;font-weight:800;overflow-wrap:anywhere}
+.green{color:var(--green)}
+.gold{color:var(--gold)}
+.red{color:var(--red)}
+.panel{margin-bottom:16px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.panel-head h2{margin:0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+label{display:block;color:var(--muted);font-size:13px;margin:12px 0 7px}
+input,select{width:100%;padding:12px;background:#0c1524;color:white;border:1px solid #344963;border-radius:9px;outline:none}
+input:focus,select:focus{border-color:var(--green)}
+.full{width:100%;margin-top:12px}
+.status{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6;color:var(--muted);font-size:13px}
+.price{font-size:clamp(28px,5vw,40px);font-weight:800;margin:12px 0}
+.actions{display:flex;gap:9px;flex-wrap:wrap}
+.actions button{flex:1;min-width:130px}
+.page{display:none}
+.page.active{display:block}
+.nav-title{color:#627993;font-size:11px;font-weight:bold;letter-spacing:1.5px;padding:12px 10px 5px}
+.feature{padding:15px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;margin:10px 0}
+.feature strong{display:block;margin-bottom:7px}
+table{width:100%;border-collapse:collapse}
+td,th{text-align:left;padding:12px 7px;border-bottom:1px solid var(--line);font-size:13px}
+th{color:var(--muted)}
+footer{text-align:center;color:#63778e;padding:25px 10px;font-size:12px}
+@media(max-width:760px){
+ main{padding:14px}
+ .layout{grid-template-columns:1fr}
+ nav{position:static;display:flex;overflow-x:auto;gap:5px;padding:7px}
+ nav button{width:auto;white-space:nowrap;font-size:12px;padding:10px}
+ .nav-title{display:none}
+ .cards{grid-template-columns:1fr 1fr}
+ .cards .card:last-child{grid-column:1/-1}
+ header{padding:14px}
+ .grid2{grid-template-columns:1fr 1fr}
 }
-#welcome h1{font-size:34px;color:#55dfb5}
-#welcome p{color:#bdc9d9;line-height:1.6}
-#welcome button{max-width:350px}
-[hidden]{display:none!important}
+@media(max-width:420px){.grid2{grid-template-columns:1fr}.big{font-size:22px}}
 </style>
 </head>
 <body>
 
+<header>
+  <div class="brand">Trade<span>Nova</span></div>
+  <div class="pill" id="top-status">NOT CONNECTED</div>
+</header>
+
 <section id="welcome">
-  <h1>TradeNova</h1>
-  <p>Your trading dashboard, connected to Deriv.</p>
-  <p>Authorize your Deriv account to access the trading interface.</p>
-  <button id="welcome-connect">Authorize with Deriv</button>
-  <p class="muted">Sign in securely with Deriv to continue.</p>
+  <div class="hero-tag">SMARTER TRADING STARTS HERE</div>
+  <h1>Welcome to <span>TradeNova</span></h1>
+  <p>Connect your Deriv account, monitor live markets and manage your trading activity from one dashboard.</p>
+  <button class="primary" id="welcome-connect">Connect with Deriv</button>
+  <p class="muted">Secure authorization through Deriv. Start with a demo account and verify every trade before using real funds.</p>
+  <div class="feature">
+    <strong>Live market monitoring</strong>
+    <span class="muted">Watch available synthetic market prices.</span>
+  </div>
+  <div class="feature">
+    <strong>Manual trading controls</strong>
+    <span class="muted">Review contract quotes before confirming purchases.</span>
+  </div>
 </section>
 
 <main id="dashboard" hidden>
-<h1>TradeNova</h1>
-<p>Deriv Options Trading Dashboard</p>
+  <div class="layout">
+    <nav aria-label="Dashboard navigation">
+      <div class="nav-title">WORKSPACE</div>
+      <button class="active" data-page="overview">⌂ Overview</button>
+      <button data-page="markets">◈ Live Markets</button>
+      <button data-page="trading">⇅ Manual Trading</button>
+      <button data-page="bot">⚙ Bot Builder</button>
+      <button data-page="activity">▤ Trade Activity</button>
+      <div class="nav-title">ACCOUNT</div>
+      <button data-page="account-page">◎ Deriv Account</button>
+    </nav>
 
-<section class="panel">
-<h2>1. Account Connection</h2>
-<button id="verify">Connect / Verify Deriv</button>
-<p id="auth" class="status">Not connected.</p>
-<label for="account">Choose account</label>
-<select id="account"><option value="">Loading accounts...</option></select>
-<button id="connect">Connect Selected Account</button>
-<p id="connection" class="status">Trading connection not connected.</p>
-<p id="balance" class="status">Balance: —</p>
-</section>
+    <div class="content">
+      <section class="page active" id="page-overview">
+        <h1>Trading Overview</h1>
+        <p class="subtitle">Your TradeNova workspace at a glance.</p>
+        <div class="cards">
+          <div class="card"><small>Connection</small><div class="big green" id="overview-connection">Offline</div></div>
+          <div class="card"><small>Account Balance</small><div class="big" id="overview-balance">—</div></div>
+          <div class="card"><small>Market Price</small><div class="big" id="overview-price">—</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>Market Watch</h2><span class="pill" id="market-badge">WAITING</span></div>
+          <label for="symbol">Select market</label>
+          <select id="symbol">
+            <option value="1HZ100V">Volatility 100 (1s) Index</option>
+            <option value="1HZ75V">Volatility 75 (1s) Index</option>
+            <option value="1HZ50V">Volatility 50 (1s) Index</option>
+            <option value="R_100">Volatility 100 Index</option>
+            <option value="R_75">Volatility 75 Index</option>
+            <option value="R_50">Volatility 50 Index</option>
+            <option value="R_25">Volatility 25 Index</option>
+            <option value="R_10">Volatility 10 Index</option>
+          </select>
+          <div class="price" id="price">Waiting for price...</div>
+          <p class="status" id="market-status">Market not connected.</p>
+          <button class="secondary" id="refresh-market">Reconnect market</button>
+        </div>
+        <div class="panel">
+          <h2>Quick Actions</h2>
+          <div class="actions">
+            <button class="primary" data-goto="trading">Open Trading</button>
+            <button class="secondary" data-goto="account-page">Connect Account</button>
+            <button class="secondary" data-goto="bot">Bot Builder</button>
+          </div>
+        </div>
+      </section>
 
-<section class="panel">
-<h2>2. Live Market</h2>
-<label for="symbol">Market</label>
-<select id="symbol">
-<option value="1HZ100V">Volatility 100 (1s)</option>
-<option value="1HZ75V">Volatility 75 (1s)</option>
-<option value="1HZ50V">Volatility 50 (1s)</option>
-<option value="R_100">Volatility 100</option>
-<option value="R_75">Volatility 75</option>
-<option value="R_50">Volatility 50</option>
-<option value="R_25">Volatility 25</option>
-<option value="R_10">Volatility 10</option>
-</select>
-<div id="price" class="price">Waiting for price...</div>
-<p id="market-status" class="status">Market not connected.</p>
-</section>
+      <section class="page" id="page-markets">
+        <h1>Live Markets</h1>
+        <p class="subtitle">Public market feed. Prices may be delayed or unavailable during connection issues.</p>
+        <div class="panel">
+          <h2>Market Price</h2>
+          <label for="symbol-market">Market</label>
+          <select id="symbol-market">
+            <option value="1HZ100V">Volatility 100 (1s)</option>
+            <option value="1HZ75V">Volatility 75 (1s)</option>
+            <option value="1HZ50V">Volatility 50 (1s)</option>
+            <option value="R_100">Volatility 100</option>
+            <option value="R_75">Volatility 75</option>
+            <option value="R_50">Volatility 50</option>
+            <option value="R_25">Volatility 25</option>
+            <option value="R_10">Volatility 10</option>
+          </select>
+          <div class="price" id="market-page-price">—</div>
+          <p class="status" id="market-page-status">Waiting for market data.</p>
+          <button class="primary full" id="market-connect">Connect Live Market</button>
+        </div>
+      </section>
 
-<section class="panel">
-<h2>3. Contract Settings</h2>
-<label for="contract">Contract type</label>
-<select id="contract">
-<option value="CALL">Rise</option>
-<option value="PUT">Fall</option>
-<option value="HIGHER">Higher</option>
-<option value="LOWER">Lower</option>
-<option value="TOUCH">Touch</option>
-<option value="NOTOUCH">No Touch</option>
-<option value="DIGITMATCH">Digits — Matches</option>
-<option value="DIGITDIFF">Digits — Differs</option>
-<option value="DIGITEVEN">Digits — Even</option>
-<option value="DIGITODD">Digits — Odd</option>
-<option value="DIGITOVER">Digits — Over</option>
-<option value="DIGITUNDER">Digits — Under</option>
-</select>
+      <section class="page" id="page-trading">
+        <h1>Manual Trading</h1>
+        <p class="subtitle">Request a quote and review all details before buying. Demo trading is recommended.</p>
+        <div class="panel">
+          <h2>Deriv Account</h2>
+          <label for="account">Trading account</label>
+          <select id="account"><option value="">Connect and load accounts first</option></select>
+          <button class="secondary full" id="connect">Connect Selected Account</button>
+          <p id="connection" class="status">Trading connection not connected.</p>
+          <p id="balance" class="status">Balance: —</p>
+        </div>
+        <div class="panel">
+          <h2>Contract Settings</h2>
+          <label for="contract">Contract type</label>
+          <select id="contract">
+            <option value="CALL">Rise</option>
+            <option value="PUT">Fall</option>
+            <option value="HIGHER">Higher</option>
+            <option value="LOWER">Lower</option>
+            <option value="TOUCH">Touch</option>
+            <option value="NOTOUCH">No Touch</option>
+            <option value="DIGITMATCH">Digits — Matches</option>
+            <option value="DIGITDIFF">Digits — Differs</option>
+            <option value="DIGITEVEN">Digits — Even</option>
+            <option value="DIGITODD">Digits — Odd</option>
+            <option value="DIGITOVER">Digits — Over</option>
+            <option value="DIGITUNDER">Digits — Under</option>
+          </select>
+          <div id="barrier-area">
+            <label id="barrier-label" for="barrier">Barrier / Digit</label>
+            <input id="barrier" type="number" step="1" value="5">
+            <p class="muted">Only used by contract types that require a barrier.</p>
+          </div>
+          <div class="grid2">
+            <div><label for="stake">Stake</label><input id="stake" type="number" min="0.35" step="0.01" value="1"></div>
+            <div><label for="duration">Duration (ticks)</label><input id="duration" type="number" min="1" max="10" step="1" value="5"></div>
+          </div>
+          <button class="primary full" id="quote">Get Quote</button>
+          <p class="status" id="quote-status">No quote requested.</p>
+          <button class="primary full" id="buy" disabled>Confirm &amp; Buy</button>
+          <button class="danger full" id="sell" disabled>Sell Open Contract</button>
+          <p class="status" id="trade-status">No trade placed.</p>
+          <p class="status" id="contract-info"></p>
+          <p class="muted">A quote is not a purchase. Buying may use real funds if a real account is selected. Always check the account, stake and contract.</p>
+        </div>
+      </section>
 
-<div id="barrier-area">
-<label id="barrier-label" for="barrier">Barrier / Digit</label>
-<input id="barrier" type="number" step="1" value="5">
-<p id="barrier-help" class="muted">Used only by contracts that require a barrier.</p>
-</div>
+      <section class="page" id="page-bot">
+        <h1>Bot Builder</h1>
+        <p class="subtitle">Configure a strategy before implementing and testing automated execution.</p>
+        <div class="panel">
+          <h2>Strategy Settings</h2>
+          <label for="bot-strategy">Strategy</label>
+          <select id="bot-strategy">
+            <option value="rise-fall">Rise / Fall</option>
+            <option value="trend">Trend Following</option>
+            <option value="digits">Digit Contracts</option>
+          </select>
+          <div class="grid2">
+            <div><label for="bot-stake">Stake per trade</label><input id="bot-stake" type="number" min="0.35" step="0.01" value="1"></div>
+            <div><label for="bot-limit">Maximum trades per session</label><input id="bot-limit" type="number" min="1" max="20" value="3"></div>
+          </div>
+          <label for="bot-stop">Session loss limit</label>
+          <input id="bot-stop" type="number" min="1" step="1" value="5">
+          <button class="primary full" id="save-bot">Save Strategy Settings</button>
+          <p class="status" id="bot-status">Bot is not running. Saving settings does not execute trades.</p>
+        </div>
+        <div class="panel">
+          <h2>Automation Status</h2>
+          <p class="status">Automated execution is not enabled by this configuration panel. A tested strategy engine, risk controls, and verified API execution are required before a bot can place trades.</p>
+        </div>
+      </section>
 
-<div class="grid">
-<div>
-<label for="stake">Stake</label>
-<input id="stake" type="number" min="0.35" step="0.01" value="1">
-</div>
-<div>
-<label for="duration">Duration (ticks)</label>
-<input id="duration" type="number" min="1" max="10" step="1" value="5">
-</div>
-</div>
+      <section class="page" id="page-activity">
+        <h1>Trade Activity</h1>
+        <p class="subtitle">Activity recorded during this browser session.</p>
+        <div class="panel">
+          <div class="panel-head"><h2>Recent Activity</h2></div>
+          <div id="log" class="status">No trade activity yet.</div>
+        </div>
+      </section>
 
-<button id="quote">Get Quote</button>
-<p id="quote-status" class="status">No quote requested.</p>
-<button id="buy" disabled>Confirm &amp; Buy</button>
-<button id="sell" class="danger" disabled>Sell Open Contract</button>
-<p id="trade-status" class="status">No trade placed.</p>
-<p id="contract-info" class="status"></p>
-<p class="muted">Contract availability depends on the market, account and API permissions. Test with Demo first.</p>
-</section>
-
-<section class="panel">
-<h2>4. Trade Activity</h2>
-<p id="log" class="status">No trade activity yet.</p>
-</section>
+      <section class="page" id="page-account-page">
+        <h1>Deriv Account</h1>
+        <p class="subtitle">Authorize and verify your Deriv account.</p>
+        <div class="panel">
+          <h2>Connection Status</h2>
+          <p id="auth" class="status">Not connected.</p>
+          <button class="primary full" id="verify">Connect / Verify Deriv</button>
+          <button class="secondary full" id="logout">Disconnect this browser session</button>
+          <p class="muted">Disconnecting clears this browser's saved access token. It does not close your Deriv account.</p>
+        </div>
+      </section>
+    </div>
+  </div>
+  <footer>TradeNova · Use demo mode first · Trading involves financial risk</footer>
 </main>
 
 <script>
 "use strict";
 
-/* Registered Deriv application details — unchanged. */
 const CLIENT_ID = "34FHIu3inyzM68fO3UiBv";
 const REDIRECT_URI = "https://tradenova-phi.vercel.app/callback";
 const API = "https://api.derivws.com";
 const AUTH_URL = "https://auth.deriv.com/oauth2/auth";
 const PUBLIC_WS = "wss://api.derivws.com/trading/v1/options/ws/public";
-
 const $ = id => document.getElementById(id);
 
-let token = null;
-let accounts = [];
-let socket = null;
-let marketSocket = null;
-let requestId = 20;
-let pending = new Map();
-let proposal = null;
-let openContractId = null;
-let busy = false;
-let currentBalance = null;
+let token = null, accounts = [], socket = null, marketSocket = null;
+let requestId = 20, pending = new Map(), proposal = null;
+let openContractId = null, busy = false, currentBalance = null;
 
-function show(id, text) {
-  $(id).textContent = text;
+function show(id, value) {
+  if ($(id)) $(id).textContent = value;
 }
-
 function accountId(a) {
   return a.account_id || a.accountId || a.loginid || "";
 }
-
 function isDemo(a) {
   const type = String(a.account_type || a.type || "").toLowerCase();
   return type.includes("demo") || accountId(a).startsWith("DOT");
 }
-
 function selectedAccount() {
   return accounts.find(a => accountId(a) === $("account").value);
 }
-
-function log(text) {
+function log(message) {
   const old = $("log").textContent;
   $("log").textContent =
     (old === "No trade activity yet." ? "" : old + "\n\n") +
-    new Date().toLocaleString() + "\n" + text;
+    new Date().toLocaleString() + "\n" + message;
 }
+function setConnected(value) {
+  show("top-status", value ? "DERIV CONNECTED" : "NOT CONNECTED");
+  show("overview-connection", value ? "Connected" : "Offline");
+  $("overview-connection").className = "big " + (value ? "green" : "");
+}
+function goTo(name) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll("nav button[data-page]").forEach(b => b.classList.remove("active"));
+  const page = $("page-" + name);
+  if (page) page.classList.add("active");
+  const navButton = document.querySelector('nav button[data-page="' + name + '"]');
+  if (navButton) navButton.classList.add("active");
+}
+document.querySelectorAll("nav button[data-page]").forEach(b => {
+  b.addEventListener("click", () => goTo(b.dataset.page));
+});
+document.querySelectorAll("[data-goto]").forEach(b => {
+  b.addEventListener("click", () => goTo(b.dataset.goto));
+});
 
-/* Deriv OAuth login using PKCE. */
 function startLogin() {
-  if (!crypto?.subtle) {
-    show("auth", "Please open TradeNova in Chrome over HTTPS.");
+  if (!window.crypto || !crypto.subtle) {
+    show("auth", "Open this website in Chrome using HTTPS.");
+    goTo("account-page");
     return;
   }
-
-  const alphabet =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
   const bytes = crypto.getRandomValues(new Uint8Array(64));
-  const verifier = Array.from(
-    bytes, b => alphabet[b % alphabet.length]
-  ).join("");
-
-  crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier))
-    .then(hash => {
-      const challenge = btoa(
-        String.fromCharCode(...new Uint8Array(hash))
-      ).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-
-      const state = Array.from(
-        crypto.getRandomValues(new Uint8Array(16)),
-        b => b.toString(16).padStart(2, "0")
-      ).join("");
-
-      sessionStorage.setItem("pkce_code_verifier", verifier);
-      sessionStorage.setItem("oauth_state", state);
-
-      const params = new URLSearchParams({
-        response_type: "code",
-        client_id: CLIENT_ID,
-        redirect_uri: REDIRECT_URI,
-        scope: "trade",
-        state,
-        code_challenge: challenge,
-        code_challenge_method: "S256"
-      });
-
-      location.href = AUTH_URL + "?" + params.toString();
-    })
-    .catch(e => show("auth", "Login could not start: " + e.message));
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+  const verifier = Array.from(bytes, b => alphabet[b % alphabet.length]).join("");
+  crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)).then(hash => {
+    const challenge = btoa(String.fromCharCode(...new Uint8Array(hash)))
+      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    const state = Array.from(crypto.getRandomValues(new Uint8Array(16)),
+      b => b.toString(16).padStart(2, "0")).join("");
+    sessionStorage.setItem("pkce_code_verifier", verifier);
+    sessionStorage.setItem("oauth_state", state);
+    const params = new URLSearchParams({
+      response_type: "code",
+      client_id: CLIENT_ID,
+      redirect_uri: REDIRECT_URI,
+      scope: "trade",
+      state,
+      code_challenge: challenge,
+      code_challenge_method: "S256"
+    });
+    location.href = AUTH_URL + "?" + params.toString();
+  }).catch(e => {
+    show("auth", "Login could not start: " + e.message);
+    goTo("account-page");
+  });
 }
 
-/* Verify the saved Deriv token and reveal the dashboard only on success. */
 async function verify() {
-  try {
-    token = sessionStorage.getItem("tradenova_access_token");
-  } catch {
-    show("auth", "Browser session storage is unavailable.");
-    $("dashboard").hidden = true;
-    $("welcome").hidden = false;
-    return false;
-  }
-
+  token = sessionStorage.getItem("tradenova_access_token");
   if (!token) {
-    show("auth", "Not connected. Authorize with Deriv first.");
+    show("auth", "No saved access token. Authorize with Deriv first.");
+    setConnected(false);
     $("dashboard").hidden = true;
     $("welcome").hidden = false;
     return false;
   }
-
   show("auth", "Verifying Deriv account...");
-
   try {
     const r = await fetch(API + "/trading/v1/options/accounts", {
-      headers: {
-        Authorization: "Bearer " + token,
-        Accept: "application/json"
-      }
+      headers: {Authorization: "Bearer " + token, Accept: "application/json"}
     });
-
     const data = await r.json();
-
-    if (!r.ok) {
-      throw new Error(
-        data?.errors?.[0]?.message || data?.error || "HTTP " + r.status
-      );
-    }
-
-    accounts = Array.isArray(data.data)
-      ? data.data
-      : data.data?.accounts || [];
-
-    if (!accounts.length) {
-      throw new Error("No Options accounts returned.");
-    }
-
-    accounts.sort((a, b) => Number(isDemo(b)) - Number(isDemo(a)));
-
+    if (!r.ok) throw new Error(data?.errors?.[0]?.message || data?.error || "HTTP " + r.status);
+    accounts = Array.isArray(data.data) ? data.data : (data.data?.accounts || []);
+    if (!accounts.length) throw new Error("No Options accounts returned.");
+    accounts.sort((a,b) => Number(isDemo(b)) - Number(isDemo(a)));
     const select = $("account");
     select.replaceChildren();
-
     accounts.forEach(a => {
       const o = document.createElement("option");
       o.value = accountId(a);
-      o.textContent = accountId(a) + " — " +
-        (isDemo(a) ? "DEMO" : "REAL") +
+      o.textContent = accountId(a) + " — " + (isDemo(a) ? "DEMO" : "REAL") +
         (a.currency ? " (" + a.currency + ")" : "");
       select.appendChild(o);
     });
-
     const demo = accounts.find(isDemo);
     if (demo) select.value = accountId(demo);
-
-    show("auth", "Deriv Connected — token verified.");
+    show("auth", "Deriv account verified.");
+    setConnected(true);
     $("welcome").hidden = true;
     $("dashboard").hidden = false;
+    connectMarket();
     return true;
-
-  } catch (e) {
+  } catch(e) {
     show("auth", "Verification failed: " + e.message);
+    setConnected(false);
     $("dashboard").hidden = true;
     $("welcome").hidden = false;
     return false;
@@ -294,12 +409,7 @@ function closeTrading() {
     socket.close();
     socket = null;
   }
-
-  pending.forEach(p => {
-    clearTimeout(p.timer);
-    p.reject(new Error("Trading connection closed."));
-  });
-
+  pending.forEach(p => { clearTimeout(p.timer); p.reject(new Error("Trading connection closed.")); });
   pending.clear();
   proposal = null;
   openContractId = null;
@@ -307,129 +417,70 @@ function closeTrading() {
   $("buy").disabled = true;
   $("sell").disabled = true;
   show("balance", "Balance: —");
+  show("overview-balance", "—");
 }
-
 function send(payload) {
   return new Promise((resolve, reject) => {
     if (!socket || socket.readyState !== WebSocket.OPEN) {
       reject(new Error("Connect the selected account first."));
       return;
     }
-
     const id = ++requestId;
     payload.req_id = id;
-
     const timer = setTimeout(() => {
       pending.delete(id);
       reject(new Error("Deriv response timed out."));
     }, 15000);
-
     pending.set(id, {resolve, reject, timer});
-
-    try {
-      socket.send(JSON.stringify(payload));
-    } catch (e) {
-      clearTimeout(timer);
-      pending.delete(id);
-      reject(e);
-    }
+    try { socket.send(JSON.stringify(payload)); }
+    catch(e) { clearTimeout(timer); pending.delete(id); reject(e); }
   });
 }
-
 async function connectTrading() {
-  if (!token) {
-    show("connection", "Connect to Deriv first.");
-    return;
-  }
-
+  if (!token) { show("connection", "Connect to Deriv first."); return; }
   const a = selectedAccount();
-  if (!a) {
-    show("connection", "Select an account first.");
-    return;
-  }
-
+  if (!a) { show("connection", "Select an account first."); return; }
   closeTrading();
   show("connection", "Connecting selected account...");
-
   try {
-    const r = await fetch(
-      API + "/trading/v1/options/accounts/" +
-      encodeURIComponent(accountId(a)) + "/otp",
-      {
-        method: "POST",
-        headers: {
-          Authorization: "Bearer " + token,
-          Accept: "application/json"
-        }
-      }
-    );
-
+    const r = await fetch(API + "/trading/v1/options/accounts/" +
+      encodeURIComponent(accountId(a)) + "/otp", {
+      method: "POST",
+      headers: {Authorization: "Bearer " + token, Accept: "application/json"}
+    });
     const data = await r.json();
-
-    if (!r.ok) {
-      throw new Error(
-        data?.errors?.[0]?.message || data?.error || "HTTP " + r.status
-      );
-    }
-
+    if (!r.ok) throw new Error(data?.errors?.[0]?.message || data?.error || "HTTP " + r.status);
     const url = data?.data?.url;
-
-    if (!url || !url.startsWith("wss://")) {
-      throw new Error("No secure trading URL returned.");
-    }
-
+    if (!url || !url.startsWith("wss://")) throw new Error("No secure trading URL returned.");
     socket = new WebSocket(url);
-
     socket.onopen = () => {
-      show(
-        "connection",
-        "Trading connection open: " + (isDemo(a) ? "DEMO" : "REAL")
-      );
-      send({balance: 1, subscribe: 1})
-        .catch(e => show("balance", e.message));
+      show("connection", "Trading connection open: " + (isDemo(a) ? "DEMO" : "REAL"));
+      send({balance: 1, subscribe: 1}).catch(e => show("balance", e.message));
     };
-
     socket.onmessage = event => {
       let m;
-      try {
-        m = JSON.parse(event.data);
-      } catch {
-        return;
-      }
-
+      try { m = JSON.parse(event.data); } catch { return; }
       if (m.req_id && pending.has(m.req_id)) {
         const p = pending.get(m.req_id);
         pending.delete(m.req_id);
         clearTimeout(p.timer);
-
-        if (m.error) {
-          p.reject(new Error(m.error.message || "Deriv request failed."));
-        } else {
-          p.resolve(m);
-        }
+        if (m.error) p.reject(new Error(m.error.message || "Deriv request failed."));
+        else p.resolve(m);
       }
-
       if (m.balance) {
         currentBalance = m.balance.balance;
-        show(
-          "balance",
-          "Balance: " + currentBalance + " " + (m.balance.currency || "")
-        );
+        const value = "Balance: " + currentBalance + " " + (m.balance.currency || "");
+        show("balance", value);
+        show("overview-balance", currentBalance + " " + (m.balance.currency || ""));
       }
-
       if (m.proposal_open_contract) {
         const c = m.proposal_open_contract;
-
-        show(
-          "contract-info",
-          "Contract ID: " + (c.contract_id || "") +
+        show("contract-info", "Contract ID: " + (c.contract_id || "") +
           "\nStatus: " + (c.status || "unknown") +
           "\nBuy price: " + (c.buy_price ?? "—") +
           "\nCurrent value: " + (c.bid_price ?? "—") +
-          "\nProfit/Loss: " + (c.profit ?? "—")
-        );
-
-        if (c.is_sold || ["sold", "won", "lost"].includes(c.status)) {
+          "\nProfit/Loss: " + (c.profit ?? "—"));
+        if (c.is_sold || ["sold","won","lost"].includes(c.status)) {
           show("trade-status", "Contract finished: " + c.status);
           $("sell").disabled = true;
           openContractId = null;
@@ -437,194 +488,102 @@ async function connectTrading() {
         }
       }
     };
-
     socket.onerror = () => show("connection", "Trading WebSocket error.");
-
     socket.onclose = () => {
       show("connection", "Trading connection closed. Reconnect to continue.");
       $("buy").disabled = true;
       $("sell").disabled = true;
     };
-
-  } catch (e) {
-    show("connection", "Connection failed: " + e.message);
-  }
+  } catch(e) { show("connection", "Connection failed: " + e.message); }
 }
 
-const barrierContracts = new Set([
-  "HIGHER", "LOWER", "TOUCH", "NOTOUCH",
-  "DIGITMATCH", "DIGITDIFF", "DIGITOVER", "DIGITUNDER"
-]);
-
+const barrierContracts = new Set(["HIGHER","LOWER","TOUCH","NOTOUCH","DIGITMATCH","DIGITDIFF","DIGITOVER","DIGITUNDER"]);
 function updateBarrier() {
   const type = $("contract").value;
-  const area = $("barrier-area");
-  const input = $("barrier");
-  const label = $("barrier-label");
-
-  area.style.display = barrierContracts.has(type) ? "block" : "none";
-  input.step = type.startsWith("DIGIT") ? "1" : "any";
-  input.min = type.startsWith("DIGIT") ? "0" : "";
-  input.max = type.startsWith("DIGIT") ? "9" : "";
-  label.textContent = type.startsWith("DIGIT") ? "Digit (0–9)" : "Barrier";
-  input.value = type.startsWith("DIGIT") ? "5" : "0.1";
-
+  $("barrier-area").style.display = barrierContracts.has(type) ? "block" : "none";
+  $("barrier").step = type.startsWith("DIGIT") ? "1" : "any";
+  $("barrier").min = type.startsWith("DIGIT") ? "0" : "";
+  $("barrier").max = type.startsWith("DIGIT") ? "9" : "";
+  $("barrier-label").textContent = type.startsWith("DIGIT") ? "Digit (0–9)" : "Barrier";
+  $("barrier").value = type.startsWith("DIGIT") ? "5" : "0.1";
   proposal = null;
   $("buy").disabled = true;
   show("quote-status", "Contract changed. Request a new quote.");
 }
-
 async function getQuote() {
   if (busy) return;
-
   const a = selectedAccount();
-  if (!a) return show("quote-status", "Select an account.");
-
+  if (!a) { show("quote-status", "Select an account."); return; }
   if (!socket || socket.readyState !== WebSocket.OPEN) {
-    return show("quote-status", "Connect the selected account first.");
+    show("quote-status", "Connect the selected account first."); return;
   }
-
-  const stake = Number($("stake").value);
-  const duration = Number($("duration").value);
+  const stake = Number($("stake").value), duration = Number($("duration").value);
   const type = $("contract").value;
-
-  if (
-    !Number.isFinite(stake) || stake <= 0 ||
-    !Number.isInteger(duration) || duration < 1 || duration > 10
-  ) {
-    return show(
-      "quote-status",
-      "Enter a valid stake and duration (1–10 ticks)."
-    );
+  if (!Number.isFinite(stake) || stake <= 0 || !Number.isInteger(duration) || duration < 1 || duration > 10) {
+    show("quote-status", "Enter a valid stake and duration (1–10 ticks)."); return;
   }
-
-  const request = {
-    proposal: 1,
-    amount: stake,
-    basis: "stake",
-    contract_type: type,
-    currency: a.currency || "USD",
-    duration: duration,
-    duration_unit: "t",
-    underlying_symbol: $("symbol").value
-  };
-
+  const request = {proposal:1, amount:stake, basis:"stake", contract_type:type,
+    currency:a.currency || "USD", duration, duration_unit:"t", underlying_symbol:$("symbol").value};
   if (barrierContracts.has(type)) {
     const b = $("barrier").value;
-
     if (b.trim() === "" || !Number.isFinite(Number(b))) {
-      return show("quote-status", "Enter the required barrier/digit.");
+      show("quote-status", "Enter the required barrier/digit."); return;
     }
-
     request.barrier = b;
   }
-
   proposal = null;
   $("buy").disabled = true;
   show("quote-status", "Requesting quote...");
-
   try {
     const result = await send(request);
-
-    if (!result.proposal?.id) {
-      throw new Error("No usable proposal returned.");
-    }
-
+    if (!result.proposal?.id) throw new Error("No usable proposal returned.");
     proposal = result.proposal;
-
-    show(
-      "quote-status",
-      "Quote received\nAsk price: " + result.proposal.ask_price +
-      "\nPayout: " + (result.proposal.payout ?? "not supplied") +
-      "\nReview settings before buying."
-    );
-
+    show("quote-status", "Quote received\nAsk price: " + result.proposal.ask_price +
+      "\nPayout: " + (result.proposal.payout ?? "not supplied") + "\nReview settings before buying.");
     $("buy").textContent = "Confirm & Buy " + (isDemo(a) ? "DEMO" : "REAL");
     $("buy").disabled = false;
-
-  } catch (e) {
-    show("quote-status", "Quote failed: " + e.message);
-  }
+  } catch(e) { show("quote-status", "Quote failed: " + e.message); }
 }
-
 async function buy() {
   if (busy || !proposal) return;
-
   const a = selectedAccount();
   if (!a) return;
-
   const demo = isDemo(a);
-  const warning = (demo ? "DEMO" : "REAL MONEY") +
-    "\nAccount: " + accountId(a) +
+  const warning = (demo ? "DEMO" : "REAL MONEY") + "\nAccount: " + accountId(a) +
     "\nContract: " + $("contract").selectedOptions[0].textContent +
-    "\nMarket: " + $("symbol").value +
-    "\nStake: " + $("stake").value + " " + (a.currency || "USD") +
-    "\n\nPlace this trade?";
-
+    "\nMarket: " + $("symbol").value + "\nStake: " + $("stake").value +
+    " " + (a.currency || "USD") + "\n\nPlace this trade?";
   if (!confirm(warning)) return;
-
   busy = true;
   $("buy").disabled = true;
   show("trade-status", "Sending purchase request...");
-
   try {
-    const result = await send({
-      buy: proposal.id,
-      price: Number(proposal.ask_price)
-    });
-
-    if (!result.buy?.contract_id) {
-      throw new Error("Deriv did not confirm the purchase.");
-    }
-
+    const result = await send({buy:proposal.id, price:Number(proposal.ask_price)});
+    if (!result.buy?.contract_id) throw new Error("Deriv did not confirm the purchase.");
     openContractId = result.buy.contract_id;
     proposal = null;
-
     show("trade-status", "Purchase confirmed by Deriv.");
     log("Purchase confirmed. Contract ID: " + openContractId);
     $("sell").disabled = false;
-
-    await send({
-      proposal_open_contract: 1,
-      contract_id: openContractId,
-      subscribe: 1
-    });
-
-  } catch (e) {
-    show("trade-status", "Purchase/monitoring error: " + e.message);
-  } finally {
-    busy = false;
-    $("buy").disabled = !proposal;
-  }
+    await send({proposal_open_contract:1, contract_id:openContractId, subscribe:1});
+  } catch(e) { show("trade-status", "Purchase/monitoring error: " + e.message); }
+  finally { busy = false; $("buy").disabled = !proposal; }
 }
-
 async function sell() {
   if (!openContractId || busy) return;
-
-  if (!confirm("Request to sell this open contract at the available price?")) {
-    return;
-  }
-
+  if (!confirm("Request to sell this open contract at the available price?")) return;
   busy = true;
   $("sell").disabled = true;
-
   try {
-    const result = await send({sell: openContractId, price: 0});
-
-    if (!result.sell) {
-      throw new Error("Deriv did not confirm the sell request.");
-    }
-
+    const result = await send({sell:openContractId, price:0});
+    if (!result.sell) throw new Error("Deriv did not confirm the sell request.");
     show("trade-status", "Sell request accepted by Deriv.");
     log("Sell response received for contract " + openContractId);
     openContractId = null;
-
-  } catch (e) {
+  } catch(e) {
     show("trade-status", "Sell failed: " + e.message);
     $("sell").disabled = !openContractId;
-  } finally {
-    busy = false;
-  }
+  } finally { busy = false; }
 }
 
 function connectMarket() {
@@ -632,86 +591,106 @@ function connectMarket() {
     marketSocket.onclose = null;
     marketSocket.close();
   }
-
   show("market-status", "Connecting to market...");
-
-  marketSocket = new WebSocket(PUBLIC_WS);
-
-  marketSocket.onopen = () => {
-    marketSocket.send(JSON.stringify({
-      ticks: $("symbol").value,
-      subscribe: 1,
-      req_id: 1
-    }));
-  };
-
-  marketSocket.onmessage = event => {
-    let m;
-    try {
-      m = JSON.parse(event.data);
-    } catch {
-      return;
-    }
-
-    if (m.error) {
-      show("market-status", "Market error: " + m.error.message);
-      return;
-    }
-
-    if (m.tick && m.tick.quote !== undefined) {
-      show("price", m.tick.quote);
-      show("market-status", "Live price updating.");
-    }
-  };
-
-  marketSocket.onerror = () => {
-    show("market-status", "Market connection error.");
-  };
-
-  marketSocket.onclose = () => {
-    show("market-status", "Market disconnected. Refresh to reconnect.");
-  };
+  show("market-page-status", "Connecting to market...");
+  show("market-badge", "CONNECTING");
+  try {
+    marketSocket = new WebSocket(PUBLIC_WS);
+    marketSocket.onopen = () => {
+      marketSocket.send(JSON.stringify({ticks:$("symbol").value, subscribe:1, req_id:1}));
+    };
+    marketSocket.onmessage = event => {
+      let m;
+      try { m = JSON.parse(event.data); } catch { return; }
+      if (m.error) {
+        show("market-status", "Market error: " + m.error.message);
+        show("market-page-status", "Market error: " + m.error.message);
+        show("market-badge", "ERROR");
+        return;
+      }
+      if (m.tick && m.tick.quote !== undefined) {
+        const quote = String(m.tick.quote);
+        show("price", quote);
+        show("overview-price", quote);
+        show("market-page-price", quote);
+        show("market-status", "Live price updating.");
+        show("market-page-status", "Live price updating.");
+        show("market-badge", "LIVE");
+      }
+    };
+    marketSocket.onerror = () => {
+      show("market-status", "Market connection error.");
+      show("market-page-status", "Market connection error.");
+      show("market-badge", "ERROR");
+    };
+    marketSocket.onclose = () => {
+      show("market-status", "Market disconnected. Try reconnecting.");
+      show("market-page-status", "Market disconnected. Try reconnecting.");
+      show("market-badge", "OFFLINE");
+    };
+  } catch(e) {
+    show("market-status", "Could not open market connection.");
+    show("market-page-status", "Could not open market connection.");
+  }
 }
 
-/* Welcome screen: check a saved token only when the user taps the button. */
 $("welcome-connect").addEventListener("click", async () => {
   if (sessionStorage.getItem("tradenova_access_token")) {
-    const connected = await verify();
-    if (connected) connectMarket();
-  } else {
-    startLogin();
-  }
+    const ok = await verify();
+    if (ok) goTo("overview");
+  } else startLogin();
 });
-
 $("verify").addEventListener("click", async () => {
-  if (!sessionStorage.getItem("tradenova_access_token")) {
-    startLogin();
-  } else {
-    const connected = await verify();
-    if (connected) connectMarket();
-  }
+  if (!sessionStorage.getItem("tradenova_access_token")) startLogin();
+  else await verify();
 });
-
 $("connect").addEventListener("click", connectTrading);
 $("quote").addEventListener("click", getQuote);
 $("buy").addEventListener("click", buy);
 $("sell").addEventListener("click", sell);
 $("contract").addEventListener("change", updateBarrier);
-
+$("refresh-market").addEventListener("click", connectMarket);
+$("market-connect").addEventListener("click", connectMarket);
 $("symbol").addEventListener("change", () => {
   proposal = null;
   $("buy").disabled = true;
   connectMarket();
 });
-
+$("symbol-market").addEventListener("change", () => {
+  $("symbol").value = $("symbol-market").value;
+  connectMarket();
+});
 $("account").addEventListener("change", () => {
   closeTrading();
   show("connection", "Account changed. Connect the selected account.");
   show("quote-status", "Reconnect and request a fresh quote.");
 });
-
-/* Always start on the welcome screen. Do not verify automatically on page load. */
+$("logout").addEventListener("click", () => {
+  closeTrading();
+  if (marketSocket) { marketSocket.close(); marketSocket = null; }
+  sessionStorage.removeItem("tradenova_access_token");
+  token = null;
+  accounts = [];
+  setConnected(false);
+  $("dashboard").hidden = true;
+  $("welcome").hidden = false;
+  show("auth", "Disconnected from this browser session.");
+});
+$("save-bot").addEventListener("click", () => {
+  const stake = Number($("bot-stake").value);
+  const limit = Number($("bot-limit").value);
+  const stop = Number($("bot-stop").value);
+  if (!(stake > 0) || !Number.isInteger(limit) || limit < 1 || limit > 20 || !(stop > 0)) {
+    show("bot-status", "Enter valid stake, trade limit (1–20), and loss limit.");
+    return;
+  }
+  show("bot-status", "Settings saved for this page session.\nStrategy: " +
+    $("bot-strategy").selectedOptions[0].textContent +
+    "\nStake: " + stake + "\nMaximum trades: " + limit +
+    "\nLoss limit: " + stop + "\nAutomation is NOT running.");
+});
 updateBarrier();
+setConnected(false);
 $("dashboard").hidden = true;
 $("welcome").hidden = false;
 </script>
