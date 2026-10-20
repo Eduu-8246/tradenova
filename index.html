@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,18 +31,16 @@ nav button{background:#23334a;color:white}
 </head>
 <body>
 <header>
-  <h1>Trade<span style="color:#42e0b5">Nova</span></h1>
-  <span id="connection" class="status">NOT CONNECTED</span>
+<h1>Trade<span style="color:#42e0b5">Nova</span></h1>
+<span id="connection" class="status">NOT CONNECTED</span>
 </header>
-
 <main>
-<section class="panel" id="welcome">
+<section class="panel">
 <h2>Trading Analysis Workspace</h2>
-<p>Analyze Deriv markets, monitor digit statistics, place manual trades, or configure a bot that you explicitly activate.</p>
+<p>Analyze Deriv markets, monitor digit statistics, and configure your trading workspace.</p>
 <button onclick="connectDeriv()">Connect with Deriv</button>
-<p class="muted">Start with a demo account. Market statistics do not guarantee future results.</p>
+<p class="muted">Use a demo account first. Statistics do not guarantee future results.</p>
 </section>
-
 <nav>
 <button onclick="show('market')">Live Market</button>
 <button onclick="show('manual')">Manual Trading</button>
@@ -49,7 +48,6 @@ nav button{background:#23334a;color:white}
 <button onclick="show('activity')">Trade Activity</button>
 <button onclick="show('account')">Account</button>
 </nav>
-
 <section class="panel" id="market">
 <h2>Live Market Analyzer</h2>
 <label>Market</label>
@@ -67,33 +65,34 @@ nav button{background:#23334a;color:white}
 <div class="stat">Ticks received<div class="value" id="tickCount">0</div></div>
 <div class="stat">Market feed<div class="value" id="feedStatus">Connecting</div></div>
 </div>
-<h2>Last Digits</h2>
+<h2>Digit Frequencies</h2>
 <div class="digits" id="digits"></div>
 <h2>Recent Tick Digits</h2>
-<div id="history" class="muted">Waiting for market ticks…</div>
-<p class="muted">Digit frequencies describe past ticks only; they do not predict the next result.</p>
+<div id="history" class="muted">Waiting for ticks…</div>
+<p class="muted">Past tick frequencies are descriptive, not guaranteed predictions.</p>
 </section>
-
 <section class="panel" id="manual" hidden>
 <h2>Manual Trading</h2>
-<p class="muted">Connect your Deriv account first. Use a demo account to test.</p>
 <label>Contract type</label>
 <select id="contract">
-<option value="CALL">Rise</option><option value="PUT">Fall</option>
-<option value="DIGITOVER">Over</option><option value="DIGITUNDER">Under</option>
-<option value="DIGITMATCH">Matches</option><option value="DIGITDIFF">Differs</option>
-<option value="DIGITEVEN">Even</option><option value="DIGITODD">Odd</option>
+<option value="CALL">Rise</option>
+<option value="PUT">Fall</option>
+<option value="DIGITOVER">Over</option>
+<option value="DIGITUNDER">Under</option>
+<option value="DIGITMATCH">Matches</option>
+<option value="DIGITDIFF">Differs</option>
+<option value="DIGITEVEN">Even</option>
+<option value="DIGITODD">Odd</option>
 </select>
 <label>Stake</label><input id="stake" type="number" min="0.35" step="0.01" value="1">
 <label>Duration in ticks</label><input id="duration" type="number" min="1" max="10" value="1">
-<label>Prediction digit (for digit contracts)</label><input id="prediction" type="number" min="0" max="9" value="5">
+<label>Prediction digit</label><input id="prediction" type="number" min="0" max="9" value="5">
 <button onclick="manualTrade()">Request Quote & Buy</button>
-<p id="manualStatus" class="muted">Not trading.</p>
+<p id="manualStatus" class="muted">Trading connection not verified.</p>
 </section>
-
 <section class="panel" id="bot" hidden>
 <h2>Bot Builder</h2>
-<p>The bot runs only after you configure it and press Start Bot. Test on demo first.</p>
+<p>Only start automation when you choose. Test with a demo account first.</p>
 <label>Strategy</label>
 <select id="strategy">
 <option value="DIGITOVER">Over selected digit</option>
@@ -102,15 +101,16 @@ nav button{background:#23334a;color:white}
 <option value="DIGITDIFF">Differs from selected digit</option>
 <option value="DIGITEVEN">Even digit</option>
 <option value="DIGITODD">Odd digit</option>
-<option value="CALL">Rise after consecutive upward ticks</option>
-<option value="PUT">Fall after consecutive downward ticks</option>
+<option value="CALL">Rise analysis</option>
+<option value="PUT">Fall analysis</option>
 </select>
 <label>Stake per trade</label><input id="botStake" type="number" min="0.35" step="0.01" value="1">
 <label>Prediction digit (0–9)</label><input id="botDigit" type="number" min="0" max="9" value="5">
 <label>Maximum trades per session</label><input id="botLimit" type="number" min="1" max="20" value="5">
 <label>Maximum session loss</label><input id="lossLimit" type="number" min="1" step="0.01" value="5">
-<label>Ticks per contract</label><input id="botDuration" type="number" min="1" max="10" value="1">
-<p><label><input id="realConsent" type="checkbox" style="width:auto"> I understand real-account trades risk real money.</label></p>
+<label>Contract duration in ticks</label><input id="botDuration" type="number" min="1" max="10" value="1">
+<label><input id="realConsent" type="checkbox" style="width:auto"> I understand real trades risk real money.</label>
+<br>
 <button onclick="startBot()">Start Bot</button>
 <button class="secondary" onclick="stopBot()">Stop Bot</button>
 <div class="grid">
@@ -118,51 +118,56 @@ nav button{background:#23334a;color:white}
 <div class="stat">Trades started<div id="botTrades" class="value">0</div></div>
 <div class="stat">Session P/L<div id="botPL" class="value">0.00</div></div>
 </div>
-<p class="muted">A stop request prevents new trades. Any contract already purchased may remain open until it settles.</p>
+<p class="muted">This version does not execute automated orders. The authenticated trading connection and contract settlement handling must be completed and tested first.</p>
 </section>
-
 <section class="panel" id="activity" hidden>
 <h2>Trade Activity</h2>
 <div id="tradeHistory" class="muted">No trades recorded in this session.</div>
 </section>
-
 <section class="panel" id="account" hidden>
 <h2>Deriv Account</h2>
 <p id="accountStatus">Not connected.</p>
-<button class="secondary" onclick="connectDeriv()">Connect / Reconnect</button>
+<button onclick="connectDeriv()">Connect / Reconnect</button>
 <button class="secondary" onclick="disconnectDeriv()">Disconnect</button>
 </section>
-
 <section class="panel"><p id="notice" class="muted">TradeNova is ready.</p></section>
 <footer class="muted" style="text-align:center;padding:20px">TradeNova · Demo first · Trading involves financial risk</footer>
 </main>
-
 <script>
 "use strict";
 const CLIENT_ID="34FHIu3inyzM68fO3UiBv";
 const REDIRECT_URI="https://tradenova-phi.vercel.app/callback";
 const PUBLIC_WS="wss://api.derivws.com/trading/v1/options/ws/public";
-let marketSocket=null, accountSocket=null, ticks=[], tickCount=0;
-let token=null, accountId=null, botRunning=false, botCount=0, botPL=0;
-let pending={}, requestId=1, lastPrices=[], openContracts={};
+let marketSocket=null,ticks=[],tickCount=0;
+let token=null,botRunning=false,botCount=0,botPL=0;
 
 function show(id){
 ["market","manual","bot","activity","account"].forEach(x=>{
 document.getElementById(x).hidden=x!==id;
 });
 }
+
 function connectDeriv(){
-const url="https://auth.deriv.com/oauth2/auth?response_type=code&client_id="+
-encodeURIComponent(CLIENT_ID)+"&redirect_uri="+encodeURIComponent(REDIRECT_URI);
-location.href=url;
+  const bytes=crypto.getRandomValues(new Uint8Array(16));
+  const state=Array.from(bytes,b=>b.toString(16).padStart(2,"0")).join("");
+  sessionStorage.setItem("deriv_oauth_state",state);
+  const url="https://auth.deriv.com/oauth2/auth"
+    +"?response_type=code"
+    +"&client_id="+encodeURIComponent(CLIENT_ID)
+    +"&redirect_uri="+encodeURIComponent(REDIRECT_URI)
+    +"&state="+encodeURIComponent(state);
+  location.href=url;
 }
+
 function notice(s){document.getElementById("notice").textContent=s;}
+
 function changeMarket(){
 if(marketSocket)marketSocket.close();
-ticks=[];tickCount=0;lastPrices=[];
-document.getElementById("history").textContent="Connecting to market…";
+ticks=[];tickCount=0;
+document.getElementById("price").textContent="Waiting…";
 connectMarket();
 }
+
 function connectMarket(){
 const symbol=document.getElementById("symbol").value;
 document.getElementById("feedStatus").textContent="Connecting";
@@ -174,15 +179,17 @@ marketSocket.send(JSON.stringify({ticks:symbol,subscribe:1,req_id:1}));
 marketSocket.onmessage=e=>{
 const d=JSON.parse(e.data);
 if(d.tick){
-const t=d.tick;tickCount++;
+const t=d.tick;
+tickCount++;
 const price=String(t.quote);
 const digit=Number(price.replace(/\D/g,"").slice(-1));
-ticks.push(digit);if(ticks.length>100)ticks.shift();
-lastPrices.push(Number(t.quote));if(lastPrices.length>6)lastPrices.shift();
+ticks.push(digit);
+if(ticks.length>100)ticks.shift();
 document.getElementById("price").textContent=price;
 document.getElementById("lastDigit").textContent=digit;
 document.getElementById("tickCount").textContent=tickCount;
-renderDigits();renderHistory();
+renderDigits();
+renderHistory();
 if(botRunning)botOnTick(digit);
 }
 if(d.error)document.getElementById("feedStatus").textContent="Feed error";
@@ -190,88 +197,96 @@ if(d.error)document.getElementById("feedStatus").textContent="Feed error";
 marketSocket.onclose=()=>document.getElementById("feedStatus").textContent="Disconnected";
 marketSocket.onerror=()=>document.getElementById("feedStatus").textContent="Connection error";
 }
+
 function renderDigits(){
-const root=document.getElementById("digits");root.innerHTML="";
+const root=document.getElementById("digits");
+root.innerHTML="";
 for(let n=0;n<10;n++){
 const count=ticks.filter(x=>x===n).length;
 const pct=ticks.length?(count/ticks.length*100).toFixed(1):"0.0";
-const el=document.createElement("div");el.className="digit";
+const el=document.createElement("div");
+el.className="digit";
 el.innerHTML="<strong>"+n+"</strong><span>"+pct+"%</span><br><small>"+count+" ticks</small>";
 root.appendChild(el);
 }
 }
+
 function renderHistory(){
 document.getElementById("history").textContent=ticks.slice(-30).reverse().join(" · ");
 }
+
 function disconnectDeriv(){
-stopBot();if(accountSocket)accountSocket.close();
-accountSocket=null;token=null;accountId=null;
+stopBot();
+token=null;
+sessionStorage.removeItem("deriv_token");
 document.getElementById("connection").textContent="NOT CONNECTED";
 document.getElementById("accountStatus").textContent="Disconnected.";
-notice("Deriv account disconnected in this page.");
+notice("Disconnected from this page.");
 }
-function readToken(){
+
+function initAuth(){
 const params=new URLSearchParams(location.search);
 const hash=new URLSearchParams(location.hash.replace(/^#/,""));
-return params.get("token")||hash.get("token")||
-sessionStorage.getItem("deriv_token")||localStorage.getItem("deriv_token");
-}
-function initAuth(){
-token=readToken();
+token=params.get("token")||hash.get("token")||sessionStorage.getItem("deriv_token");
 if(token){
 sessionStorage.setItem("deriv_token",token);
 document.getElementById("connection").textContent="TOKEN RECEIVED";
-document.getElementById("accountStatus").textContent="Authorization token received. Account details need verification.";
-notice("Token received. Account API connection must be verified before trading.");
+document.getElementById("accountStatus").textContent="Token received; authenticated account connection still needs verification.";
+notice("Token received. Verify the account connection before trading.");
 }
 }
-function send(payload){
-return new Promise((resolve,reject)=>{
-if(!accountSocket||accountSocket.readyState!==1)return reject(Error("Account socket is not connected."));
-const id=requestId++;payload.req_id=id;pending[id]={resolve,reject};
-accountSocket.send(JSON.stringify(payload));
-setTimeout(()=>{if(pending[id]){delete pending[id];reject(Error("Deriv request timed out."));}},10000);
-});
-}
+
 function manualTrade(){
 document.getElementById("manualStatus").textContent=
-"Trading is not enabled until a verified authenticated Deriv account socket is connected.";
-notice("Connect and verify your authorized account before placing trades.");
+"Order execution is not enabled until the authenticated trading connection is verified.";
+notice("Manual trading is not yet connected to the authenticated trading API.");
 }
+
 function startBot(){
 if(botRunning)return;
-if(!token){alert("Connect and verify your Deriv account first.");return;}
-if(!confirm("Start the bot with these settings? It may place trades automatically while running."))return;
+if(!token){
+alert("Connect and verify your Deriv account first.");
+return;
+}
+if(!confirm("Start the bot analysis with these settings?"))return;
 if(!document.getElementById("realConsent").checked){
-if(!confirm("You have not checked real-account risk consent. Continue only if you are using a demo account."))return;
+if(!confirm("Continue only if you are testing with a demo account."))return;
 }
 const stake=Number(document.getElementById("botStake").value);
 const limit=Number(document.getElementById("botLimit").value);
 const loss=Number(document.getElementById("lossLimit").value);
-if(!(stake>0&&limit>=1&&loss>0)){alert("Check your stake, trade limit, and loss limit.");return;}
-botCount=0;botPL=0;botRunning=true;updateBot();
-notice("Bot started by your confirmation. Account trade execution requires a verified trading connection.");
+if(!(stake>0&&limit>=1&&loss>0)){
+alert("Check your stake, trade limit, and loss limit.");
+return;
 }
+botCount=0;botPL=0;botRunning=true;
+updateBot();
+notice("Bot analysis started by your confirmation. It does not place orders in this version.");
+}
+
 function stopBot(){
-botRunning=false;updateBot();
+botRunning=false;
+updateBot();
 document.getElementById("botStatus").textContent="Stopped";
 }
-function botOnTick(digit){
+
+function botOnTick(){
 if(!botRunning)return;
-const limit=Number(document.getElementById("botLimit").value);
-const loss=Number(document.getElementById("lossLimit").value);
-if(botCount>=limit){stopBot();notice("Maximum trade limit reached.");return;}
-if(botPL<=-loss){stopBot();notice("Session loss limit reached.");return;}
-/* Deliberately do not submit real orders until account authorization,
-   account selection, and contract settlement tracking are verified. */
+if(botCount>=Number(document.getElementById("botLimit").value)){
+stopBot();notice("Maximum analysis count reached.");return;
+}
+if(botPL<=-Number(document.getElementById("lossLimit").value)){
+stopBot();notice("Session loss limit reached.");return;
+}
 document.getElementById("botStatus").textContent="Analyzing";
 }
+
 function updateBot(){
 document.getElementById("botStatus").textContent=botRunning?"Running":"Stopped";
 document.getElementById("botTrades").textContent=botCount;
 document.getElementById("botPL").textContent=botPL.toFixed(2);
 }
-function renderTrades(){}
+
 connectMarket();
 initAuth();
 </script>
