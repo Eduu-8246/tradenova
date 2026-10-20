@@ -4,43 +4,42 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TradeNova | Trading Dashboard</title>
+<title>TradeNova</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#0b1120;color:#f1f5f9;font:15px Arial,sans-serif}
-header{padding:18px;background:#101a2c;border-bottom:1px solid #26354b;display:flex;justify-content:space-between;align-items:center}
+header{padding:18px;background:#101a2c;display:flex;justify-content:space-between;align-items:center}
 h1{font-size:24px;margin:0}h2{font-size:19px;color:#42e0b5}
-small,.muted{color:#94a3b8}
 main{max-width:1000px;margin:auto;padding:16px}
-.panel{background:#121e31;border:1px solid #293a52;border-radius:16px;padding:18px;margin:14px 0}
-button,select,input{padding:12px;border-radius:9px;border:1px solid #34465d;font-size:14px}
+.panel{background:#121e31;border:1px solid #293a52;border-radius:14px;padding:18px;margin:14px 0}
+button,select,input{padding:12px;border-radius:8px;border:1px solid #34465d;font-size:14px}
 button{background:#42e0b5;color:#07131a;font-weight:bold;cursor:pointer;margin:4px}
-button.secondary{background:#23334a;color:white}
+.secondary,nav button{background:#23334a;color:white}
 input,select{background:#0b1424;color:white;width:100%;margin:5px 0 12px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
 .stat{background:#0b1424;padding:13px;border-radius:10px}
-.value{font-size:23px;color:#42e0b5;font-weight:bold;margin-top:8px}
+.value{font-size:22px;color:#42e0b5;font-weight:bold;margin-top:8px;overflow-wrap:anywhere}
 nav{display:flex;gap:6px;flex-wrap:wrap;padding:10px}
-nav button{background:#23334a;color:white}
 .digits{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-.digit{background:#0b1424;border-radius:9px;text-align:center;padding:12px 2px}
+.digit{background:#0b1424;border-radius:8px;text-align:center;padding:12px 2px}
 .digit strong{display:block;font-size:22px}
-.status{color:#42e0b5}
-#notice{overflow-wrap:anywhere}
+.muted{color:#94a3b8}
+[hidden]{display:none!important}
 </style>
 </head>
 <body>
 <header>
 <h1>Trade<span style="color:#42e0b5">Nova</span></h1>
-<span id="connection" class="status">NOT CONNECTED</span>
+<span id="connection">NOT CONNECTED</span>
 </header>
 <main>
 <section class="panel">
 <h2>Trading Analysis Workspace</h2>
-<p>Analyze Deriv markets, monitor digit statistics, and configure your trading workspace.</p>
+<p>Analyze Deriv markets, view digit statistics, and configure your trading workspace.</p>
 <button onclick="connectDeriv()">Connect with Deriv</button>
-<p class="muted">Use a demo account first. Statistics do not guarantee future results.</p>
+<p class="muted">Test with a demo account first. Analysis cannot guarantee profits.</p>
 </section>
+
 <nav>
 <button onclick="show('market')">Live Market</button>
 <button onclick="show('manual')">Manual Trading</button>
@@ -48,6 +47,7 @@ nav button{background:#23334a;color:white}
 <button onclick="show('activity')">Trade Activity</button>
 <button onclick="show('account')">Account</button>
 </nav>
+
 <section class="panel" id="market">
 <h2>Live Market Analyzer</h2>
 <label>Market</label>
@@ -60,7 +60,7 @@ nav button{background:#23334a;color:white}
 <option value="R_10">Volatility 10</option>
 </select>
 <div class="grid">
-<div class="stat">Latest price<div class="value" id="price">Waiting…</div></div>
+<div class="stat">Latest price<div class="value" id="price">Waiting...</div></div>
 <div class="stat">Latest digit<div class="value" id="lastDigit">—</div></div>
 <div class="stat">Ticks received<div class="value" id="tickCount">0</div></div>
 <div class="stat">Market feed<div class="value" id="feedStatus">Connecting</div></div>
@@ -68,9 +68,10 @@ nav button{background:#23334a;color:white}
 <h2>Digit Frequencies</h2>
 <div class="digits" id="digits"></div>
 <h2>Recent Tick Digits</h2>
-<div id="history" class="muted">Waiting for ticks…</div>
-<p class="muted">Past tick frequencies are descriptive, not guaranteed predictions.</p>
+<div id="history" class="muted">Waiting for ticks...</div>
+<p class="muted">Past frequencies describe previous ticks, not future outcomes.</p>
 </section>
+
 <section class="panel" id="manual" hidden>
 <h2>Manual Trading</h2>
 <label>Contract type</label>
@@ -86,13 +87,14 @@ nav button{background:#23334a;color:white}
 </select>
 <label>Stake</label><input id="stake" type="number" min="0.35" step="0.01" value="1">
 <label>Duration in ticks</label><input id="duration" type="number" min="1" max="10" value="1">
-<label>Prediction digit</label><input id="prediction" type="number" min="0" max="9" value="5">
+<label>Prediction digit (0–9)</label><input id="prediction" type="number" min="0" max="9" value="5">
 <button onclick="manualTrade()">Request Quote & Buy</button>
-<p id="manualStatus" class="muted">Trading connection not verified.</p>
+<p id="manualStatus" class="muted">Trading API not yet connected.</p>
 </section>
+
 <section class="panel" id="bot" hidden>
 <h2>Bot Builder</h2>
-<p>Only start automation when you choose. Test with a demo account first.</p>
+<p>The trader chooses when to start and stop automation.</p>
 <label>Strategy</label>
 <select id="strategy">
 <option value="DIGITOVER">Over selected digit</option>
@@ -101,11 +103,11 @@ nav button{background:#23334a;color:white}
 <option value="DIGITDIFF">Differs from selected digit</option>
 <option value="DIGITEVEN">Even digit</option>
 <option value="DIGITODD">Odd digit</option>
-<option value="CALL">Rise analysis</option>
-<option value="PUT">Fall analysis</option>
+<option value="CALL">Rise</option>
+<option value="PUT">Fall</option>
 </select>
 <label>Stake per trade</label><input id="botStake" type="number" min="0.35" step="0.01" value="1">
-<label>Prediction digit (0–9)</label><input id="botDigit" type="number" min="0" max="9" value="5">
+<label>Prediction digit</label><input id="botDigit" type="number" min="0" max="9" value="5">
 <label>Maximum trades per session</label><input id="botLimit" type="number" min="1" max="20" value="5">
 <label>Maximum session loss</label><input id="lossLimit" type="number" min="1" step="0.01" value="5">
 <label>Contract duration in ticks</label><input id="botDuration" type="number" min="1" max="10" value="1">
@@ -114,177 +116,276 @@ nav button{background:#23334a;color:white}
 <button onclick="startBot()">Start Bot</button>
 <button class="secondary" onclick="stopBot()">Stop Bot</button>
 <div class="grid">
-<div class="stat">Bot status<div id="botStatus" class="value">Stopped</div></div>
-<div class="stat">Trades started<div id="botTrades" class="value">0</div></div>
-<div class="stat">Session P/L<div id="botPL" class="value">0.00</div></div>
+<div class="stat">Bot status<div class="value" id="botStatus">Stopped</div></div>
+<div class="stat">Trades started<div class="value" id="botTrades">0</div></div>
+<div class="stat">Session P/L<div class="value" id="botPL">0.00</div></div>
 </div>
-<p class="muted">This version does not execute automated orders. The authenticated trading connection and contract settlement handling must be completed and tested first.</p>
+<p class="muted">This dashboard version provides analysis only. Automated order execution and settlement tracking are not enabled.</p>
 </section>
+
 <section class="panel" id="activity" hidden>
 <h2>Trade Activity</h2>
 <div id="tradeHistory" class="muted">No trades recorded in this session.</div>
 </section>
+
 <section class="panel" id="account" hidden>
 <h2>Deriv Account</h2>
 <p id="accountStatus">Not connected.</p>
 <button onclick="connectDeriv()">Connect / Reconnect</button>
 <button class="secondary" onclick="disconnectDeriv()">Disconnect</button>
 </section>
+
 <section class="panel"><p id="notice" class="muted">TradeNova is ready.</p></section>
 <footer class="muted" style="text-align:center;padding:20px">TradeNova · Demo first · Trading involves financial risk</footer>
 </main>
+
 <script>
 "use strict";
+
 const CLIENT_ID="34FHIu3inyzM68fO3UiBv";
 const REDIRECT_URI="https://tradenova-phi.vercel.app/callback";
 const PUBLIC_WS="wss://api.derivws.com/trading/v1/options/ws/public";
-let marketSocket=null,ticks=[],tickCount=0;
-let token=null,botRunning=false,botCount=0,botPL=0;
+
+let marketSocket=null;
+let ticks=[];
+let tickCount=0;
+let token=null;
+let botRunning=false;
+let botCount=0;
+let botPL=0;
 
 function show(id){
-["market","manual","bot","activity","account"].forEach(x=>{
-document.getElementById(x).hidden=x!==id;
-});
+  ["market","manual","bot","activity","account"].forEach(x=>{
+    document.getElementById(x).hidden=x!==id;
+  });
 }
 
-function connectDeriv(){
-  const bytes=crypto.getRandomValues(new Uint8Array(16));
-  const state=Array.from(bytes,b=>b.toString(16).padStart(2,"0")).join("");
-  sessionStorage.setItem("deriv_oauth_state",state);
-  const url="https://auth.deriv.com/oauth2/auth"
-    +"?response_type=code"
-    +"&client_id="+encodeURIComponent(CLIENT_ID)
-    +"&redirect_uri="+encodeURIComponent(REDIRECT_URI)
-    +"&state="+encodeURIComponent(state);
-  location.href=url;
+function notice(message){
+  document.getElementById("notice").textContent=message;
 }
 
-function notice(s){document.getElementById("notice").textContent=s;}
+/* Secure Deriv OAuth using PKCE S256 */
+async function connectDeriv(){
+  try{
+    if(!window.crypto || !crypto.subtle){
+      throw new Error("Secure login requires HTTPS. Open the live Vercel website.");
+    }
+
+    const randomBytes=crypto.getRandomValues(new Uint8Array(32));
+    const verifier=Array.from(randomBytes,b=>
+      b.toString(16).padStart(2,"0")
+    ).join("");
+
+    const digest=await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(verifier)
+    );
+
+    const challenge=btoa(
+      String.fromCharCode(...new Uint8Array(digest))
+    ).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+
+    const stateBytes=crypto.getRandomValues(new Uint8Array(16));
+    const state=Array.from(stateBytes,b=>
+      b.toString(16).padStart(2,"0")
+    ).join("");
+
+    sessionStorage.setItem("oauth_state",state);
+    sessionStorage.setItem("pkce_code_verifier",verifier);
+
+    const params=new URLSearchParams({
+      response_type:"code",
+      client_id:CLIENT_ID,
+      redirect_uri:REDIRECT_URI,
+      state:state,
+      code_challenge:challenge,
+      code_challenge_method:"S256"
+    });
+
+    window.location.href="https://auth.deriv.com/oauth2/auth?"+params.toString();
+  }catch(error){
+    alert("Could not start secure Deriv login: "+error.message);
+  }
+}
 
 function changeMarket(){
-if(marketSocket)marketSocket.close();
-ticks=[];tickCount=0;
-document.getElementById("price").textContent="Waiting…";
-connectMarket();
+  if(marketSocket)marketSocket.close();
+  ticks=[];
+  tickCount=0;
+  document.getElementById("price").textContent="Waiting...";
+  document.getElementById("tickCount").textContent="0";
+  document.getElementById("lastDigit").textContent="—";
+  renderDigits();
+  connectMarket();
 }
 
 function connectMarket(){
-const symbol=document.getElementById("symbol").value;
-document.getElementById("feedStatus").textContent="Connecting";
-marketSocket=new WebSocket(PUBLIC_WS);
-marketSocket.onopen=()=>{
-document.getElementById("feedStatus").textContent="Live";
-marketSocket.send(JSON.stringify({ticks:symbol,subscribe:1,req_id:1}));
-};
-marketSocket.onmessage=e=>{
-const d=JSON.parse(e.data);
-if(d.tick){
-const t=d.tick;
-tickCount++;
-const price=String(t.quote);
-const digit=Number(price.replace(/\D/g,"").slice(-1));
-ticks.push(digit);
-if(ticks.length>100)ticks.shift();
-document.getElementById("price").textContent=price;
-document.getElementById("lastDigit").textContent=digit;
-document.getElementById("tickCount").textContent=tickCount;
-renderDigits();
-renderHistory();
-if(botRunning)botOnTick(digit);
-}
-if(d.error)document.getElementById("feedStatus").textContent="Feed error";
-};
-marketSocket.onclose=()=>document.getElementById("feedStatus").textContent="Disconnected";
-marketSocket.onerror=()=>document.getElementById("feedStatus").textContent="Connection error";
+  const symbol=document.getElementById("symbol").value;
+  document.getElementById("feedStatus").textContent="Connecting";
+
+  try{
+    marketSocket=new WebSocket(PUBLIC_WS);
+
+    marketSocket.onopen=()=>{
+      document.getElementById("feedStatus").textContent="Connected";
+      marketSocket.send(JSON.stringify({
+        ticks:symbol,
+        subscribe:1,
+        req_id:1
+      }));
+    };
+
+    marketSocket.onmessage=event=>{
+      let data;
+      try{data=JSON.parse(event.data)}catch{return}
+
+      if(data.tick){
+        const quote=String(data.tick.quote);
+        const decimals=quote.includes(".")?quote.split(".")[1]:"";
+        const digit=Number((decimals.length?decimals:quote).slice(-1));
+
+        ticks.push(digit);
+        if(ticks.length>100)ticks.shift();
+        tickCount++;
+
+        document.getElementById("price").textContent=quote;
+        document.getElementById("lastDigit").textContent=digit;
+        document.getElementById("tickCount").textContent=tickCount;
+        document.getElementById("feedStatus").textContent="Live";
+
+        renderDigits();
+        renderHistory();
+        if(botRunning)botOnTick();
+      }
+
+      if(data.error){
+        document.getElementById("feedStatus").textContent="Feed error";
+      }
+    };
+
+    marketSocket.onclose=()=>{
+      document.getElementById("feedStatus").textContent="Disconnected";
+    };
+
+    marketSocket.onerror=()=>{
+      document.getElementById("feedStatus").textContent="Connection error";
+    };
+  }catch(error){
+    document.getElementById("feedStatus").textContent="Unavailable";
+  }
 }
 
 function renderDigits(){
-const root=document.getElementById("digits");
-root.innerHTML="";
-for(let n=0;n<10;n++){
-const count=ticks.filter(x=>x===n).length;
-const pct=ticks.length?(count/ticks.length*100).toFixed(1):"0.0";
-const el=document.createElement("div");
-el.className="digit";
-el.innerHTML="<strong>"+n+"</strong><span>"+pct+"%</span><br><small>"+count+" ticks</small>";
-root.appendChild(el);
-}
+  const root=document.getElementById("digits");
+  root.innerHTML="";
+
+  for(let n=0;n<10;n++){
+    const count=ticks.filter(x=>x===n).length;
+    const pct=ticks.length?(count/ticks.length*100).toFixed(1):"0.0";
+    const el=document.createElement("div");
+    el.className="digit";
+
+    const strong=document.createElement("strong");
+    strong.textContent=n;
+    const percent=document.createElement("span");
+    percent.textContent=pct+"%";
+    const small=document.createElement("small");
+    small.textContent=count+" ticks";
+
+    el.append(strong,percent,document.createElement("br"),small);
+    root.appendChild(el);
+  }
 }
 
 function renderHistory(){
-document.getElementById("history").textContent=ticks.slice(-30).reverse().join(" · ");
-}
-
-function disconnectDeriv(){
-stopBot();
-token=null;
-sessionStorage.removeItem("deriv_token");
-document.getElementById("connection").textContent="NOT CONNECTED";
-document.getElementById("accountStatus").textContent="Disconnected.";
-notice("Disconnected from this page.");
+  document.getElementById("history").textContent=
+    ticks.slice(-30).reverse().join(" · ");
 }
 
 function initAuth(){
-const params=new URLSearchParams(location.search);
-const hash=new URLSearchParams(location.hash.replace(/^#/,""));
-token=params.get("token")||hash.get("token")||sessionStorage.getItem("deriv_token");
-if(token){
-sessionStorage.setItem("deriv_token",token);
-document.getElementById("connection").textContent="TOKEN RECEIVED";
-document.getElementById("accountStatus").textContent="Token received; authenticated account connection still needs verification.";
-notice("Token received. Verify the account connection before trading.");
+  token=sessionStorage.getItem("tradenova_access_token");
+
+  if(token){
+    document.getElementById("connection").textContent="TOKEN RECEIVED";
+    document.getElementById("accountStatus").textContent=
+      "Access token received. Account authorization still needs verification.";
+    notice("Token received. Verify the authenticated trading connection before trading.");
+  }
 }
+
+function disconnectDeriv(){
+  stopBot();
+  token=null;
+  sessionStorage.removeItem("tradenova_access_token");
+  document.getElementById("connection").textContent="NOT CONNECTED";
+  document.getElementById("accountStatus").textContent="Disconnected from this page.";
+  notice("Local session disconnected.");
 }
 
 function manualTrade(){
-document.getElementById("manualStatus").textContent=
-"Order execution is not enabled until the authenticated trading connection is verified.";
-notice("Manual trading is not yet connected to the authenticated trading API.");
+  document.getElementById("manualStatus").textContent=
+    "Order execution is not enabled in this version. Do not assume a trade was placed.";
+  notice("Manual order execution needs a verified authenticated trading API.");
 }
 
 function startBot(){
-if(botRunning)return;
-if(!token){
-alert("Connect and verify your Deriv account first.");
-return;
-}
-if(!confirm("Start the bot analysis with these settings?"))return;
-if(!document.getElementById("realConsent").checked){
-if(!confirm("Continue only if you are testing with a demo account."))return;
-}
-const stake=Number(document.getElementById("botStake").value);
-const limit=Number(document.getElementById("botLimit").value);
-const loss=Number(document.getElementById("lossLimit").value);
-if(!(stake>0&&limit>=1&&loss>0)){
-alert("Check your stake, trade limit, and loss limit.");
-return;
-}
-botCount=0;botPL=0;botRunning=true;
-updateBot();
-notice("Bot analysis started by your confirmation. It does not place orders in this version.");
+  if(botRunning)return;
+
+  if(!token){
+    alert("Connect your Deriv account first.");
+    return;
+  }
+
+  if(!confirm("Start bot analysis with your selected settings?"))return;
+
+  const stake=Number(document.getElementById("botStake").value);
+  const limit=Number(document.getElementById("botLimit").value);
+  const loss=Number(document.getElementById("lossLimit").value);
+  const duration=Number(document.getElementById("botDuration").value);
+
+  if(!(stake>0&&limit>=1&&loss>0&&duration>=1)){
+    alert("Check the stake, trade limit, loss limit, and duration.");
+    return;
+  }
+
+  if(!document.getElementById("realConsent").checked){
+    if(!confirm("Continue only for demo testing?"))return;
+  }
+
+  botCount=0;
+  botPL=0;
+  botRunning=true;
+  updateBot();
+  notice("Bot analysis started. This version does not place trades.");
 }
 
 function stopBot(){
-botRunning=false;
-updateBot();
-document.getElementById("botStatus").textContent="Stopped";
+  botRunning=false;
+  updateBot();
 }
 
 function botOnTick(){
-if(!botRunning)return;
-if(botCount>=Number(document.getElementById("botLimit").value)){
-stopBot();notice("Maximum analysis count reached.");return;
-}
-if(botPL<=-Number(document.getElementById("lossLimit").value)){
-stopBot();notice("Session loss limit reached.");return;
-}
-document.getElementById("botStatus").textContent="Analyzing";
+  if(!botRunning)return;
+
+  if(botCount>=Number(document.getElementById("botLimit").value)){
+    stopBot();
+    notice("Analysis limit reached.");
+    return;
+  }
+
+  if(botPL<=-Number(document.getElementById("lossLimit").value)){
+    stopBot();
+    notice("Session loss limit reached.");
+    return;
+  }
+
+  document.getElementById("botStatus").textContent="Analyzing";
 }
 
 function updateBot(){
-document.getElementById("botStatus").textContent=botRunning?"Running":"Stopped";
-document.getElementById("botTrades").textContent=botCount;
-document.getElementById("botPL").textContent=botPL.toFixed(2);
+  document.getElementById("botStatus").textContent=botRunning?"Running":"Stopped";
+  document.getElementById("botTrades").textContent=botCount;
+  document.getElementById("botPL").textContent=botPL.toFixed(2);
 }
 
 connectMarket();
