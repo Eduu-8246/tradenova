@@ -1157,6 +1157,119 @@ function disconnect() {
   message("accountStatus", "Trading session disconnected.");
 }
 
+let analysisPrices = [];
+
+function resetAnalysis() {
+  analysisPrices = [];
+  renderAnalysis();
+}
+
+function recordAnalysisTick(price) {
+  if (!Number.isFinite(price)) return;
+  analysisPrices.push(price);
+  if (analysisPrices.length > 120) analysisPrices.shift();
+  renderAnalysis();
+}
+
+function ema(values, period) {
+  const k = 2 / (period + 1);
+  const out = [];
+  values.forEach((v, i) => {
+    out.push(i === 0 ? v : v * k + out[i - 1] * (1 - k));
+  });
+  return out;
+}
+
+function renderAnalysis() {
+  const p = analysisPrices;
+  const set = (id, value) => {
+    document.getElementById(id).textContent = value;
+  };
+
+  set("analysisCount", p.length + " ticks");
+  const rsiValues = [];
+  if (p.length >= 15) {
+    let gains = 0, losses = 0;
+    for (let i = p.length - 14; i < p.length; i++) {
+      const d = p[i] - p[i - 1];
+      if (d > 0) gains += d;
+      else losses -= d;
+    }
+    const rsi = losses === 0 ? (gains === 0 ? 50 : 100)
+      : 100 - 100 / (1 + gains / losses);
+    rsiValues.push(rsi);
+  }
+
+  set("analysisRsi", rsiValues.length
+    ? rsiValues[0].toFixed(1) : "Need 15 ticks");
+
+  let macdText = "Need 35 ticks";
+  if (p.length >= 35) {
+    const fast = ema(p, 12);
+    const slow = ema(p, 26);
+    const line = p.map((_, i) => fast[i] - slow[i]);
+    const signal = ema(line, 9);
+    const histogram = line.at(-1) - signal.at(-1);
+    macdText = (histogram >= 0 ? "+" : "") +
+      histogram.toFixed(5);
+  }
+  set("analysisMacd", macdText);
+
+  if (p.length >= 10) {
+    const recent = p.slice(-10);
+    const change = recent.at(-1) - recent[0];
+    set("analysisTrend", change > 0 ? "Upward bias"
+      : change < 0 ? "Downward bias" : "Sideways / mixed");
+  } else {
+    set("analysisTrend", "Collecting ticks…");
+  }
+
+  const recent = p.slice(-30);
+  set("analysisSupport", recent.length
+    ? Math.min(...recent).toString() : "Waiting…");
+  set("analysisResistance", recent.length
+    ? Math.max(...recent).toString() : "Waiting…");
+
+  const moves = [];
+  for (let i = Math.max(1, p.length - 20); i < p.length; i++) {
+    moves.push(Math.abs(p[i] - p[i - 1]));
+  }
+  set("analysisVolatility", moves.length
+    ? (moves.reduce((a, b) => a + b, 0) / moves.length).toFixed(5)
+    : "Waiting…");
+
+  set("analysisSummary", p.length < 30
+    ? "Collecting ticks. Estimates improve with more observations."
+    : "Support/resistance use recent tick extremes. RSI and MACD describe past movement; they cannot guarantee the next outcome.");
+
+  const canvas = document.getElementById("analysisChart");
+  const ctx = canvas.getContext("2d");
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = "#0b1423";
+  ctx.fillRect(0, 0, w, h);
+
+  if (!p.length) {
+    ctx.fillStyle = "#9aacc4";
+    ctx.font = "18px sans-serif";
+    ctx.fillText("Waiting for live prices…", 24, h / 2);
+    return;
+  }
+
+  const min = Math.min(...p), max = Math.max(...p);
+  const range = max - min || Math.max(Math.abs(max) * 0.000001, 0.00000001);
+  ctx.beginPath();
+  p.forEach((v, i) => {
+    const x = 20 + (w - 40) * (p.length === 1 ? 0.5 : i / (p.length - 1));
+    const y = h - 20 - ((v - min) / range) * (h - 40);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = "#46e4bd";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+}
+
 function startMarket() {
   if (marketSocket) marketSocket.close();
 
