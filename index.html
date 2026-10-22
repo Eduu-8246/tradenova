@@ -9,7 +9,7 @@
 *{box-sizing:border-box}
 body{margin:0;background:#0b1120;color:#f1f5f9;font:15px Arial}
 header,main{padding:16px}
-header{background:#101a2c;display:flex;justify-content:space-between;gap:10px}
+header{background:#101a2c;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
 main{max-width:850px;margin:auto}
 .panel{background:#121e31;border:1px solid #293a52;border-radius:13px;padding:17px;margin:13px 0}
 h2{color:#42e0b5;font-size:19px}
@@ -18,10 +18,11 @@ button{background:#42e0b5;color:#07131a;font-weight:bold;margin:4px;cursor:point
 button:disabled{opacity:.5;cursor:not-allowed}
 select,input{background:#0b1424;color:white;width:100%;margin:6px 0 12px}
 .secondary{background:#26364d;color:white}
+.danger{background:#e85d75;color:white}
 .status{color:#42e0b5;overflow-wrap:anywhere}
 .small{color:#9aabc0;font-size:13px;line-height:1.5}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
-.stat{background:#0b1424;padding:12px;border-radius:8px}
+.stat{background:#0b1424;padding:12px;border-radius:8px;overflow-wrap:anywhere}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -42,7 +43,7 @@ select,input{background:#0b1424;color:white;width:100%;margin:6px 0 12px}
 <option value="">Connect and load accounts first</option>
 </select>
 <button onclick="connectTrading()">Connect trading session</button>
-<p class="small">Start with a demo account. Real trades risk real money.</p>
+<p class="small">Test with Demo first. Real trades risk real money.</p>
 </section>
 
 <section class="panel">
@@ -57,9 +58,9 @@ select,input{background:#0b1424;color:white;width:100%;margin:6px 0 12px}
 <option value="R_10">Volatility 10</option>
 </select>
 <div class="grid">
-<div class="stat">Latest price <p id="price">Waiting...</p></div>
-<div class="stat">Last digit <p id="digit">—</p></div>
-<div class="stat">Market feed <p id="feed" class="status">Connecting</p></div>
+<div class="stat">Latest price<p id="price">Waiting...</p></div>
+<div class="stat">Last digit<p id="digit">—</p></div>
+<div class="stat">Market feed<p id="feed" class="status">Connecting</p></div>
 </div>
 </section>
 
@@ -80,11 +81,64 @@ select,input{background:#0b1424;color:white;width:100%;margin:6px 0 12px}
 <input id="stake" type="number" min="0.35" step="0.01" value="1">
 <label>Duration in ticks</label>
 <input id="duration" type="number" min="1" max="10" value="1">
-<label>Prediction digit (for Over, Under, Matches and Differs)</label>
+<label>Prediction digit (Over, Under, Matches, Differs)</label>
 <input id="barrier" type="number" min="0" max="9" value="5">
 <button id="tradeButton" onclick="placeTrade()">Request Quote &amp; Buy</button>
 <p id="tradeStatus" class="status">No trade placed.</p>
-<p class="small">A quote will be shown before purchase. Do not use a real account until demo trading has been tested successfully.</p>
+<p class="small">Review the quote and confirm each manual purchase.</p>
+</section>
+
+<section class="panel">
+<h2>Bot Builder — Demo Only</h2>
+<p class="small">
+Configure a simple repeated-trade strategy. The bot requests a quote,
+buys one contract, waits for its result, then considers the next trade.
+It does not predict the market or guarantee profits.
+</p>
+
+<label>Bot contract</label>
+<select id="botContract">
+<option value="CALL">Rise</option>
+<option value="PUT">Fall</option>
+<option value="DIGITOVER">Digit Over</option>
+<option value="DIGITUNDER">Digit Under</option>
+<option value="DIGITMATCH">Digit Matches</option>
+<option value="DIGITDIFF">Digit Differs</option>
+<option value="DIGITEVEN">Even</option>
+<option value="DIGITODD">Odd</option>
+</select>
+
+<label>Stake per trade</label>
+<input id="botStake" type="number" min="0.35" step="0.01" value="1">
+
+<label>Duration in ticks</label>
+<input id="botDuration" type="number" min="1" max="10" value="1">
+
+<label>Prediction digit (Over, Under, Matches, Differs)</label>
+<input id="botBarrier" type="number" min="0" max="9" value="5">
+
+<label>Maximum number of trades per run</label>
+<input id="botMaxTrades" type="number" min="1" max="20" value="3">
+
+<label>Stop after cumulative losses reach (account currency)</label>
+<input id="botLossLimit" type="number" min="0.01" step="0.01" value="3">
+
+<div class="grid">
+<div class="stat">Trades placed<p id="botCount">0</p></div>
+<div class="stat">Net result<p id="botProfit">0.00</p></div>
+<div class="stat">Bot status<p id="botState" class="status">Stopped</p></div>
+</div>
+
+<button id="startBot" onclick="startBot()">Start Demo Bot</button>
+<button id="stopBot" class="danger" onclick="stopBot()" disabled>Emergency Stop</button>
+<p id="botStatus" class="status">Bot stopped. Select a Demo account to begin.</p>
+<p class="small">
+Safety: this bot refuses to start unless the selected and connected
+account is identified as Demo. Emergency Stop prevents further purchases;
+a contract already purchased cannot be cancelled by this button and may
+continue until it settles. Loss limits cannot guarantee that losses stay
+below the configured amount if a trade is already open.
+</p>
 </section>
 
 <section class="panel">
@@ -105,18 +159,59 @@ select,input{background:#0b1424;color:white;width:100%;margin:6px 0 12px}
 const CLIENT_ID = "34FHIu3inyzM68fO3UiBv";
 const REDIRECT_URI = "https://tradenova-phi.vercel.app/callback";
 const API = "https://api.derivws.com";
+const DIGIT_CONTRACTS = [
+  "DIGITOVER", "DIGITUNDER", "DIGITMATCH", "DIGITDIFF"
+];
 
 let token = sessionStorage.getItem("tradenova_access_token");
 let accounts = [];
 let tradeSocket = null;
 let marketSocket = null;
 let pending = new Map();
+let contractWatchers = new Map();
 let requestId = 0;
 let activeAccount = null;
 let busy = false;
 
+let bot = {
+  running: false,
+  trades: 0,
+  net: 0,
+  lossLimit: 0,
+  maxTrades: 0,
+  stake: 0,
+  duration: 1,
+  barrier: 5,
+  contract: "CALL",
+  currency: "USD",
+  symbol: "1HZ100V",
+  accountId: ""
+};
+
 function message(id, text) {
   document.getElementById(id).textContent = text;
+}
+
+function accountIdOf(a) {
+  return a && (a.account_id || a.id || a.loginid || "");
+}
+
+function isDemoAccount(a) {
+  const type = String(a?.account_type || a?.type || "").toLowerCase();
+  const id = String(accountIdOf(a)).toLowerCase();
+  return type.includes("demo") || id.startsWith("vrtc");
+}
+
+function sameAccount(a, b) {
+  return !!a && !!b && String(accountIdOf(a)) === String(accountIdOf(b));
+}
+
+function updateBotUI() {
+  message("botCount", String(bot.trades));
+  message("botProfit", bot.net.toFixed(2) + " " + bot.currency);
+  message("botState", bot.running ? "Running" : "Stopped");
+  document.getElementById("startBot").disabled = bot.running;
+  document.getElementById("stopBot").disabled = !bot.running;
 }
 
 async function connectDeriv() {
@@ -202,19 +297,16 @@ async function loadAccounts() {
       opt.value = String(i);
       opt.textContent =
         (a.account_type || a.type || "Account") + " — " +
-        (a.account_id || a.id || a.loginid || "Account " + (i + 1)) +
+        (accountIdOf(a) || "Account " + (i + 1)) +
         (a.currency ? " (" + a.currency + ")" : "");
       select.appendChild(opt);
     });
 
-    const demoIndex = accounts.findIndex(a =>
-      String(a.account_type || a.type || "").toLowerCase().includes("demo") ||
-      String(a.account_id || a.id || "").toLowerCase().startsWith("vrtc")
-    );
-
+    const demoIndex = accounts.findIndex(isDemoAccount);
     select.value = String(demoIndex >= 0 ? demoIndex : 0);
+
     message("accountStatus",
-      "Accounts loaded. Verify that Demo is selected before trading.");
+      "Accounts loaded. Verify Demo is selected before trading.");
   } catch (e) {
     message("accountStatus", e.message);
   }
@@ -222,32 +314,21 @@ async function loadAccounts() {
 
 function selectedAccount() {
   const i = Number(document.getElementById("account").value);
-
   if (!Number.isInteger(i) || !accounts[i]) {
     throw new Error("Load and select a Deriv account first.");
   }
-
   return accounts[i];
 }
 
 async function connectTrading() {
   try {
     const account = selectedAccount();
-    const type = String(account.account_type || account.type || "")
-      .toLowerCase();
-    const id = account.account_id || account.id || account.loginid;
-
+    const id = accountIdOf(account);
     if (!id) throw new Error("Account ID missing from account response.");
 
-    const isDemo =
-      type.includes("demo") ||
-      String(id).toLowerCase().startsWith("vrtc");
-
-    if (!isDemo && !confirm(
+    if (!isDemoAccount(account) && !confirm(
       "This may be a REAL account. Trades can lose real money. Continue?"
-    )) {
-      return;
-    }
+    )) return;
 
     message("accountStatus", "Preparing secure trading connection...");
 
@@ -270,21 +351,33 @@ async function connectTrading() {
     pending.forEach(p => p.reject(new Error("Connection restarted.")));
     pending.clear();
 
+    contractWatchers.forEach(w =>
+      w.reject(new Error("Trading connection restarted.")));
+    contractWatchers.clear();
+
     activeAccount = account;
     tradeSocket = new WebSocket(wsUrl);
 
     tradeSocket.onopen = () => {
-      document.getElementById("connection").textContent = "Trading connected";
+      message("connection", "Trading connected");
       message("accountStatus", "Trading connection ready.");
     };
 
     tradeSocket.onmessage = event => {
       let data;
-
       try {
         data = JSON.parse(event.data);
       } catch {
         return;
+      }
+
+      const poc = data.proposal_open_contract;
+      if (poc && poc.contract_id != null) {
+        const watcher = contractWatchers.get(String(poc.contract_id));
+        if (watcher && poc.is_sold) {
+          contractWatchers.delete(String(poc.contract_id));
+          watcher.resolve(poc);
+        }
       }
 
       if (data.req_id && pending.has(data.req_id)) {
@@ -304,7 +397,13 @@ async function connectTrading() {
     };
 
     tradeSocket.onclose = () => {
-      document.getElementById("connection").textContent = "Disconnected";
+      message("connection", "Disconnected");
+      if (bot.running) stopBot("Connection closed. Bot stopped.");
+      pending.forEach(p => p.reject(new Error("Trading connection closed.")));
+      pending.clear();
+      contractWatchers.forEach(w =>
+        w.reject(new Error("Trading connection closed.")));
+      contractWatchers.clear();
     };
   } catch (e) {
     message("accountStatus", e.message);
@@ -321,8 +420,42 @@ function sendRequest(payload) {
     const id = ++requestId;
     pending.set(id, { resolve, reject });
 
-    tradeSocket.send(JSON.stringify({ ...payload, req_id: id }));
+    try {
+      tradeSocket.send(JSON.stringify({ ...payload, req_id: id }));
+    } catch (e) {
+      pending.delete(id);
+      reject(e);
+    }
   });
+}
+
+function addActivity(text) {
+  const row = document.createElement("p");
+  row.textContent = text;
+  const activity = document.getElementById("activity");
+  if (activity.textContent === "No trades in this session.") {
+    activity.textContent = "";
+  }
+  activity.prepend(row);
+}
+
+function makeProposal(contract, stake, duration, barrier, currency, symbol) {
+  const proposal = {
+    proposal: 1,
+    amount: stake,
+    basis: "stake",
+    contract_type: contract,
+    currency,
+    duration,
+    duration_unit: "t",
+    underlying_symbol: symbol
+  };
+
+  if (DIGIT_CONTRACTS.includes(contract)) {
+    proposal.barrier = String(barrier);
+  }
+
+  return proposal;
 }
 
 async function placeTrade() {
@@ -344,13 +477,10 @@ async function placeTrade() {
     if (!Number.isFinite(stake) || stake <= 0) {
       throw new Error("Enter a valid stake.");
     }
-
     if (!Number.isInteger(duration) || duration < 1 || duration > 10) {
       throw new Error("Duration must be between 1 and 10 ticks.");
     }
-
-    if (["DIGITOVER", "DIGITUNDER", "DIGITMATCH", "DIGITDIFF"]
-        .includes(contract) &&
+    if (DIGIT_CONTRACTS.includes(contract) &&
         (!Number.isInteger(barrier) || barrier < 0 || barrier > 9)) {
       throw new Error("Prediction digit must be between 0 and 9.");
     }
@@ -359,45 +489,27 @@ async function placeTrade() {
     document.getElementById("tradeButton").disabled = true;
     message("tradeStatus", "Requesting a price quote...");
 
-    const proposal = {
-      proposal: 1,
-      amount: stake,
-      basis: "stake",
-      contract_type: contract,
-      currency,
-      duration,
-      duration_unit: "t",
-      underlying_symbol: symbol
-    };
-
-    if (["DIGITOVER", "DIGITUNDER", "DIGITMATCH", "DIGITDIFF"]
-        .includes(contract)) {
-      proposal.barrier = String(barrier);
-    }
-
-    const quoteResult = await sendRequest(proposal);
+    const quoteResult = await sendRequest(
+      makeProposal(contract, stake, duration, barrier, currency, symbol)
+    );
     const quote = quoteResult.proposal;
 
-    if (!quote || !quote.id) {
-      throw new Error("Deriv returned no valid quote.");
-    }
+    if (!quote || !quote.id) throw new Error("Deriv returned no valid quote.");
 
     const ask = Number(quote.ask_price);
-
     if (!Number.isFinite(ask) || ask <= 0) {
       throw new Error("Deriv returned an invalid purchase price.");
     }
 
     const approved = confirm(
       "CONFIRM DERIV TRADE\n\n" +
-      "Account: " + (activeAccount.account_id ||
-        activeAccount.id || activeAccount.loginid || "Selected account") + "\n" +
+      "Account: " + accountIdOf(activeAccount) + "\n" +
       "Contract: " + contract + "\n" +
       "Market: " + symbol + "\n" +
       "Stake: " + stake + " " + currency + "\n" +
       "Duration: " + duration + " tick(s)\n" +
-      "Quoted purchase price: " + ask + " " + currency + "\n\n" +
-      "Buy this contract?"
+      "Quoted purchase price: " + ask + " " + currency +
+      "\n\nBuy this contract?"
     );
 
     if (!approved) {
@@ -407,28 +519,17 @@ async function placeTrade() {
 
     message("tradeStatus", "Sending purchase request to Deriv...");
 
-    const bought = await sendRequest({
-      buy: quote.id,
-      price: ask
-    });
-
+    const bought = await sendRequest({ buy: quote.id, price: ask });
     if (!bought.buy || !bought.buy.contract_id) {
       throw new Error("Purchase was not confirmed by Deriv.");
     }
 
     const trade = bought.buy;
-    const row = document.createElement("p");
-
-    row.textContent =
-      "Confirmed contract #" + trade.contract_id +
-      " | Buy price: " + (trade.buy_price ?? ask) +
-      " | Status: purchased";
-
-    document.getElementById("activity").prepend(row);
+    addActivity("Manual contract #" + trade.contract_id +
+      " | Buy price: " + (trade.buy_price ?? ask) + " | Purchased");
 
     message("tradeStatus",
       "PURCHASE CONFIRMED. Contract ID: " + trade.contract_id);
-
   } catch (e) {
     message("tradeStatus", "Trade not confirmed: " + e.message);
   } finally {
@@ -437,16 +538,232 @@ async function placeTrade() {
   }
 }
 
-function disconnect() {
-  if (tradeSocket) tradeSocket.close();
+function stopBot(reason = "Emergency stop requested. No further purchases will be made.") {
+  bot.running = false;
+  updateBotUI();
+  message("botStatus", reason);
+}
 
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function buyBotContract() {
+  const quoteResult = await sendRequest(
+    makeProposal(
+      bot.contract, bot.stake, bot.duration, bot.barrier,
+      bot.currency, bot.symbol
+    )
+  );
+
+  const quote = quoteResult.proposal;
+  if (!quote || !quote.id) throw new Error("Bot received no valid quote.");
+
+  const ask = Number(quote.ask_price);
+  if (!Number.isFinite(ask) || ask <= 0) {
+    throw new Error("Bot received an invalid quote price.");
+  }
+
+  const bought = await sendRequest({ buy: quote.id, price: ask });
+  if (!bought.buy || !bought.buy.contract_id) {
+    throw new Error("Deriv did not confirm the bot purchase.");
+  }
+
+  return { trade: bought.buy, ask };
+}
+
+async function waitForContract(contractId) {
+  const key = String(contractId);
+
+  let resolveWatch;
+  let rejectWatch;
+  const settled = new Promise((resolve, reject) => {
+    resolveWatch = resolve;
+    rejectWatch = reject;
+  });
+
+  contractWatchers.set(key, {
+    resolve: resolveWatch,
+    reject: rejectWatch
+  });
+
+  try {
+    const initial = await sendRequest({
+      proposal_open_contract: 1,
+      contract_id: contractId,
+      subscribe: 1
+    });
+
+    if (initial.proposal_open_contract?.is_sold) {
+      contractWatchers.delete(key);
+      return initial.proposal_open_contract;
+    }
+
+    return await settled;
+  } finally {
+    contractWatchers.delete(key);
+  }
+}
+
+async function startBot() {
+  if (bot.running) return;
+
+  try {
+    const account = selectedAccount();
+
+    if (!isDemoAccount(account)) {
+      throw new Error("Bot Builder is Demo-only. Select a Demo account.");
+    }
+    if (!activeAccount || !sameAccount(activeAccount, account)) {
+      throw new Error("Connect the selected Demo account's trading session first.");
+    }
+    if (!tradeSocket || tradeSocket.readyState !== WebSocket.OPEN) {
+      throw new Error("Trading session is not connected.");
+    }
+
+    const stake = Number(document.getElementById("botStake").value);
+    const duration = Number(document.getElementById("botDuration").value);
+    const barrier = Number(document.getElementById("botBarrier").value);
+    const maxTrades = Number(document.getElementById("botMaxTrades").value);
+    const lossLimit = Number(document.getElementById("botLossLimit").value);
+    const contract = document.getElementById("botContract").value;
+    const symbol = document.getElementById("symbol").value;
+
+    if (!Number.isFinite(stake) || stake <= 0) {
+      throw new Error("Enter a valid bot stake.");
+    }
+    if (!Number.isInteger(duration) || duration < 1 || duration > 10) {
+      throw new Error("Bot duration must be 1–10 ticks.");
+    }
+    if (!Number.isInteger(maxTrades) || maxTrades < 1 || maxTrades > 20) {
+      throw new Error("Maximum trades must be between 1 and 20.");
+    }
+    if (!Number.isFinite(lossLimit) || lossLimit <= 0) {
+      throw new Error("Loss limit must be greater than zero.");
+    }
+    if (DIGIT_CONTRACTS.includes(contract) &&
+        (!Number.isInteger(barrier) || barrier < 0 || barrier > 9)) {
+      throw new Error("Prediction digit must be between 0 and 9.");
+    }
+
+    bot = {
+      running: true,
+      trades: 0,
+      net: 0,
+      lossLimit,
+      maxTrades,
+      stake,
+      duration,
+      barrier,
+      contract,
+      currency: activeAccount.currency || "USD",
+      symbol,
+      accountId: accountIdOf(activeAccount)
+    };
+
+    updateBotUI();
+    message("botStatus", "Bot started on Demo. Waiting for the first quote.");
+
+    const approved = confirm(
+      "START DEMO BOT\n\n" +
+      "Demo account: " + bot.accountId + "\n" +
+      "Contract: " + contract + "\n" +
+      "Market: " + symbol + "\n" +
+      "Stake per trade: " + stake + " " + bot.currency + "\n" +
+      "Maximum trades: " + maxTrades + "\n" +
+      "Loss stop threshold: " + lossLimit + " " + bot.currency + "\n\n" +
+      "This bot places real orders in the selected Demo account " +
+      "without asking for confirmation for each purchase. Start?"
+    );
+
+    if (!approved) {
+      stopBot("Bot start cancelled.");
+      return;
+    }
+
+    await runBot();
+  } catch (e) {
+    stopBot("Bot error: " + e.message);
+  }
+}
+
+async function runBot() {
+  try {
+    while (bot.running && bot.trades < bot.maxTrades) {
+      if (!tradeSocket || tradeSocket.readyState !== WebSocket.OPEN) {
+        throw new Error("Trading connection closed.");
+      }
+      if (!sameAccount(activeAccount, { account_id: bot.accountId }) ||
+          !isDemoAccount(activeAccount)) {
+        throw new Error("Demo account changed. Bot stopped.");
+      }
+
+      message("botStatus",
+        "Trade " + (bot.trades + 1) + " of " + bot.maxTrades +
+        ": requesting quote...");
+
+      const { trade, ask } = await buyBotContract();
+      bot.trades++;
+      updateBotUI();
+
+      addActivity("Bot contract #" + trade.contract_id +
+        " | Buy price: " + (trade.buy_price ?? ask) +
+        " " + bot.currency + " | Waiting for result");
+
+      message("botStatus",
+        "Bot purchased contract #" + trade.contract_id +
+        ". Waiting for settlement.");
+
+      const result = await waitForContract(trade.contract_id);
+      const profit = Number(result.profit);
+
+      if (Number.isFinite(profit)) bot.net += profit;
+      updateBotUI();
+
+      addActivity("Bot contract #" + trade.contract_id +
+        " | Result: " + (Number.isFinite(profit) ? profit.toFixed(2) : "unavailable") +
+        " " + bot.currency +
+        " | " + (result.status || (profit > 0 ? "won" : profit < 0 ? "lost" : "settled")));
+
+      message("botStatus",
+        "Contract settled. Net result: " + bot.net.toFixed(2) +
+        " " + bot.currency);
+
+      if (bot.net <= -bot.lossLimit) {
+        stopBot("Loss threshold reached. Bot stopped.");
+        break;
+      }
+
+      if (!bot.running) break;
+      if (bot.trades >= bot.maxTrades) break;
+
+      await wait(1000);
+    }
+
+    if (bot.running && bot.trades >= bot.maxTrades) {
+      stopBot("Maximum trade count reached. Bot stopped.");
+    }
+  } catch (e) {
+    stopBot("Bot stopped: " + e.message);
+  } finally {
+    updateBotUI();
+  }
+}
+
+function disconnect() {
+  if (bot.running) stopBot("Trading session disconnected. Bot stopped.");
+
+  if (tradeSocket) tradeSocket.close();
   tradeSocket = null;
   activeAccount = null;
 
   pending.forEach(p => p.reject(new Error("Disconnected.")));
   pending.clear();
+  contractWatchers.forEach(w =>
+    w.reject(new Error("Disconnected.")));
+  contractWatchers.clear();
 
-  document.getElementById("connection").textContent = "Disconnected";
+  message("connection", "Disconnected");
   message("accountStatus", "Trading session disconnected.");
 }
 
@@ -454,7 +771,6 @@ function startMarket() {
   if (marketSocket) marketSocket.close();
 
   const symbol = document.getElementById("symbol").value;
-
   message("feed", "Connecting...");
 
   try {
@@ -464,7 +780,6 @@ function startMarket() {
 
     marketSocket.onopen = () => {
       message("feed", "Connected");
-
       marketSocket.send(JSON.stringify({
         ticks: symbol,
         subscribe: 1
@@ -473,7 +788,6 @@ function startMarket() {
 
     marketSocket.onmessage = event => {
       let data;
-
       try {
         data = JSON.parse(event.data);
       } catch {
@@ -488,7 +802,6 @@ function startMarket() {
       if (data.tick) {
         const price = String(data.tick.quote);
         const digits = price.includes(".") ? price.split(".")[1] : price;
-
         message("price", price);
         message("digit", (digits || price).slice(-1));
         message("feed", "Live");
@@ -504,6 +817,13 @@ function startMarket() {
 
 document.getElementById("symbol").addEventListener("change", startMarket);
 
+document.getElementById("account").addEventListener("change", () => {
+  if (bot.running) stopBot("Account selection changed. Bot stopped.");
+  if (activeAccount && !sameAccount(activeAccount, selectedAccount())) {
+    message("accountStatus", "Account selection changed. Reconnect the trading session.");
+  }
+});
+
 if (token) {
   message("connection", "Token received");
   message("accountStatus", "Login token found. Load your accounts.");
@@ -511,6 +831,7 @@ if (token) {
   message("connection", "Not connected");
 }
 
+updateBotUI();
 startMarket();
 </script>
 </body>
