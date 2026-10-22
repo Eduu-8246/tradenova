@@ -1310,6 +1310,7 @@ function startMarket() {resetAnalysis();
         message("price", price);
         message("digit", (digits || price).slice(-1));
         message("feed", "Live");
+recordAnalysisTick(Number(data.tick.quote));
       }
     };
 
