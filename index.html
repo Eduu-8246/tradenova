@@ -6,6 +6,221 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TradeNova Trading</title>
 <style>
+
+/* TradeNova visual refresh — keeps existing trading functions */
+:root {
+  color-scheme: dark;
+  --bg: #080e1b;
+  --panel: #111c2e;
+  --line: #263750;
+  --mint: #46e4bd;
+  --muted: #9aacc4;
+  --text: #eef4ff;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 12% -10%, #24738433, transparent 38%),
+    radial-gradient(ellipse at 100% 0%, #4453ad29, transparent 32%),
+    var(--bg);
+  color: var(--text);
+  font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 17px clamp(16px, 4vw, 42px);
+  background: #080e1be8;
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid #7896be2e;
+  align-items: center;
+}
+
+header strong {
+  font-size: 23px;
+  letter-spacing: -.8px;
+}
+
+#connection {
+  color: #c4d3e8;
+  font-size: 13px;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #101a2b;
+  overflow-wrap: anywhere;
+}
+
+main {
+  width: min(1220px, 100%);
+  margin: 0 auto;
+  padding: 24px clamp(14px, 3vw, 30px) 46px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+.panel {
+  min-width: 0;
+  margin: 0;
+  padding: clamp(17px, 2.2vw, 25px);
+  border: 1px solid #7e9ac030;
+  border-radius: 19px;
+  background: linear-gradient(145deg, #142135, #0d1727);
+  box-shadow: 0 14px 38px #00000030;
+  transition: border-color .2s;
+}
+
+.panel:hover { border-color: #46e4bd55; }
+
+main > .panel:nth-child(1),
+main > .panel:nth-child(2) {
+  grid-column: 1 / -1;
+}
+
+h2 {
+  margin: 0 0 17px;
+  color: #f0f7ff;
+  font-size: 18px;
+  letter-spacing: -.35px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+h2::before {
+  content: "";
+  display: block;
+  width: 4px;
+  height: 20px;
+  border-radius: 4px;
+  background: var(--mint);
+  box-shadow: 0 0 15px #46e4bd4d;
+}
+
+label {
+  display: block;
+  margin: 13px 0 5px;
+  color: #b8c8dc;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .35px;
+}
+
+button, select, input {
+  font: inherit;
+  border-radius: 10px;
+  border: 1px solid #30445f;
+}
+
+button {
+  padding: 11px 15px;
+  margin: 5px 5px 5px 0;
+  background: linear-gradient(135deg, #58f0c9, #31cda9);
+  color: #062019;
+  font-weight: 750;
+  cursor: pointer;
+  transition: .18s;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px #31cda933;
+}
+
+button:disabled { opacity: .45; cursor: not-allowed; }
+
+button.secondary {
+  background: #1b2a40;
+  color: #e2edf9;
+  border-color: #344a66;
+}
+
+button.danger {
+  background: linear-gradient(135deg, #f17b8b, #d94660);
+  color: white;
+  border-color: #ec6a7e;
+}
+
+select, input {
+  display: block;
+  width: 100%;
+  padding: 12px 13px;
+  margin: 6px 0 13px;
+  background: #0a1424;
+  color: #f3f7ff;
+}
+
+button:focus-visible, select:focus-visible, input:focus-visible {
+  outline: none;
+  border-color: var(--mint);
+  box-shadow: 0 0 0 3px #46e4bd26;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.stat {
+  min-width: 0;
+  padding: 15px 16px;
+  border-radius: 13px;
+  border: 1px solid #7693ba2b;
+  background: linear-gradient(145deg, #0b1728, #0d1b2e);
+  color: #9eb1ca;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.stat p {
+  margin: 8px 0 0;
+  color: #f4f8ff;
+  font-size: clamp(17px, 2vw, 23px);
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
+.status { color: var(--mint); overflow-wrap: anywhere; }
+
+.small { color: var(--muted); font-size: 12px; line-height: 1.65; }
+
+[hidden] { display: none !important; }
+
+@media (max-width: 760px) {
+  main {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 15px 12px 30px;
+    gap: 13px;
+  }
+
+  main > .panel:nth-child(n) { grid-column: 1; }
+
+  header { padding: 14px 16px; }
+  header strong { font-size: 21px; }
+
+  .grid { gap: 7px; }
+  .stat { padding: 11px 9px; }
+  .stat p { font-size: 16px; }
+  .panel { border-radius: 15px; padding: 17px; }
+  button { max-width: 100%; }
+}
+
+@media (max-width: 390px) {
+  .grid { grid-template-columns: 1fr; }
+  .stat p { font-size: 19px; }
+}
+
 *{box-sizing:border-box}
 body{margin:0;background:#0b1120;color:#f1f5f9;font:15px Arial}
 header,main{padding:16px}
