@@ -1270,7 +1270,7 @@ function renderAnalysis() {
   ctx.stroke();
 }
 
-function startMarket() {
+function startMarket() {resetAnalysis();
   if (marketSocket) marketSocket.close();
 
   const symbol = document.getElementById("symbol").value;
