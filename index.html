@@ -248,6 +248,27 @@ select,input{background:#0b1424;color:white;width:100%;margin:6px 0 12px}
 </header>
 <main>
 
+<section class="panel" id="analysisPanel">
+  <h2>Market Analysis</h2>
+  <p class="small">Live tick analysis to help you assess the market. Signals are not guaranteed predictions.</p>
+
+  <canvas id="analysisChart" width="900" height="260"
+    style="width:100%;height:210px;background:#0b1423;border-radius:12px"></canvas>
+
+  <div class="grid">
+    <div class="stat">Trend<p id="analysisTrend">Collecting ticks…</p></div>
+    <div class="stat">RSI (14)<p id="analysisRsi">—</p></div>
+    <div class="stat">MACD<p id="analysisMacd">—</p></div>
+    <div class="stat">Average movement<p id="analysisVolatility">—</p></div>
+    <div class="stat">Support estimate<p id="analysisSupport">—</p></div>
+    <div class="stat">Resistance estimate<p id="analysisResistance">—</p></div>
+    <div class="stat">Ticks collected<p id="analysisCount">0</p></div>
+  </div>
+
+  <p id="analysisSummary" class="small">Waiting for live market ticks.</p>
+  <button class="secondary" onclick="resetAnalysis()">Reset analysis</button>
+</section>
+
 <section class="panel">
 <h2>Deriv Account</h2>
 <p id="accountStatus">Connect your Deriv account to begin.</p>
